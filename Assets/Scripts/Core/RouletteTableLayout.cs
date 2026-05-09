@@ -1,8 +1,11 @@
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 public class RouletteTableLayout
 {
+    // Scriptable object references for retrieving config information
     private RouletteTableData rouletteTableData;
+    private PayoutList payoutList;
 
     // Propertires for RouletteTableData config
     private Vector3 NumberGridOrigin => rouletteTableData.NumberGridOrigin;
@@ -22,6 +25,7 @@ public class RouletteTableLayout
     private Transform sixLineSpotsParent;
     private Transform outsideSpotsParent;
 
+    // TODO: Make this private 
     [HideInInspector] public List<BetSpot> allSpots = new List<BetSpot>();
 
     // Number grid layout.
@@ -36,9 +40,23 @@ public class RouletteTableLayout
     private static readonly HashSet<int> redNumbers = new HashSet<int>
     { 1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36 };
 
-    private void Initialize()
+
+    private int GetPayoutMultiplier(BetType betType) => payoutList.GetMultiplier(betType);
+    private Result Initialize()
     {
         rouletteTableData = Resources.Load<RouletteTableData>("Data/RouletteTableData");
+        if(rouletteTableData == null)
+        {
+            // TODO: Debug
+            return Result.Failure;
+        }
+        
+        payoutList = Resources.Load<PayoutList>("Data/PayoutList");
+        if (payoutList == null)
+        {
+            // TODO: Debug
+            return Result.Failure;
+        }
 
         GameObject go = new GameObject("RouletteTableLayout");
         straightSpotsParent = CreateParent("StraightSpots", go.transform);
@@ -47,6 +65,8 @@ public class RouletteTableLayout
         cornerSpotsParent = CreateParent("CornerSpots", go.transform);
         sixLineSpotsParent = CreateParent("SixLineSpots", go.transform);
         outsideSpotsParent = CreateParent("OutsideSpots", go.transform);
+
+        return Result.Success;
     }
 
     private Transform CreateParent(string objectName, Transform parent)
@@ -62,11 +82,15 @@ public class RouletteTableLayout
     }
 
     // Generate all bet spots
-    public void GenerateAllBetSpots()
+    public Result GenerateAllBetSpots()
     {
         ClearAllSpots();
 
-        Initialize();
+        if (Initialize() == Result.Failure)
+        {
+            // TODO : Log
+            return Result.Failure;
+        }
 
         // Bets inside the grid
         GenerateStraightBets();
@@ -79,6 +103,8 @@ public class RouletteTableLayout
         GenerateColumnBets();
         GenerateDozenBets();
         GenerateOutsideBets();
+
+        return Result.Success;
     }
 
 
@@ -86,7 +112,7 @@ public class RouletteTableLayout
     private Vector3 GridPos(float col, float row)
     {
         float x = NumberGridOrigin.x
-                  + gridCellWidth               // 0 hücresi boşluğu
+                  + gridCellWidth
                   + col * gridCellWidth
                   + gridCellWidth * 0.5f;
         float z = NumberGridOrigin.z + row * gridCellDepth + gridCellDepth * 0.5f;
@@ -119,11 +145,14 @@ public class RouletteTableLayout
     // Generates bets for each  number to the center of the grid slot.
     private void GenerateStraightBets()
     {
+        BetType betType = BetType.Straight;
+        int payoutMultiplier = GetPayoutMultiplier(betType);
+
         // Create spot for straight bet on "0".
-        CreateSpot("Straight_0", 
-                    BetType.Straight, 
+        CreateSpot("Straight_0",
+                    betType, 
                     new[] { 0 },
-                    35,
+                    payoutMultiplier,
                     ZeroPos(), 
                     straightSpotsParent, 
                     "0");
@@ -135,9 +164,9 @@ public class RouletteTableLayout
                 int num = numberGrid[col, row];
 
                 CreateSpot($"Straight_{num}",
-                             BetType.Straight,
+                             betType,
                              new[] { num },
-                             35,
+                             payoutMultiplier,
                              GridPos(col, row),
                              straightSpotsParent,
                              num.ToString());
@@ -148,6 +177,9 @@ public class RouletteTableLayout
     // Generates bets for each adjacent number.
     private void GenerateSplitBets()
     {
+        BetType betType = BetType.Split;
+        int payoutMultiplier = GetPayoutMultiplier(betType);
+
         // Z-split (same col, adjacent rows)
         for (int col = 0; col < 12; col++)
         {
@@ -157,10 +189,10 @@ public class RouletteTableLayout
                 int b = numberGrid[col, row + 1];
 
 
-                CreateSpot($"Split_{a}_{b}", 
-                             BetType.Split, 
-                             new[] { a, b }, 
-                             17,
+                CreateSpot($"Split_{a}_{b}",
+                             betType, 
+                             new[] { a, b },
+                             payoutMultiplier,
                              GridPos(col, row + 0.5f), 
                              splitSpotsParent, 
                              $"{a}|{b}");
@@ -177,9 +209,9 @@ public class RouletteTableLayout
                 int b = numberGrid[col + 1, row];
 
                 CreateSpot($"Split_{a}_{b}",
-                             BetType.Split, 
+                             betType, 
                              new[] { a, b },
-                             17,
+                             payoutMultiplier,
                              GridPos(col + 0.5f, row), 
                              splitSpotsParent, 
                              $"{a}|{b}");
@@ -193,9 +225,9 @@ public class RouletteTableLayout
 
             CreateSpot(
                 $"Split_0_{n}", 
-                BetType.Split, 
-                new[] { 0, n }, 
-                17,
+                betType, 
+                new[] { 0, n },
+                payoutMultiplier,
                 pos, 
                 splitSpotsParent, 
                 $"0|{n}");
@@ -205,6 +237,9 @@ public class RouletteTableLayout
     // Generates bets for each column including 3 numbers.
     private void GenerateStreetBets()
     {
+        BetType betType = BetType.Street;
+        int payoutMultiplier = GetPayoutMultiplier(betType);
+
         for (int col = 0; col < 12; col++)
         {
             int[] nums = { numberGrid[col, 0], numberGrid[col, 1], numberGrid[col, 2] };
@@ -213,9 +248,9 @@ public class RouletteTableLayout
             
             CreateSpot(
                 $"Street_{nums[0]}_{nums[1]}_{nums[2]}",
-                BetType.Street,
+                betType,
                 nums,
-                11,
+                payoutMultiplier,
                 pos, 
                 streetSpotsParent,
                 $"{nums[0]}-{nums[1]}-{nums[2]}");
@@ -225,6 +260,9 @@ public class RouletteTableLayout
     // Generates corner bets that includes 4 numbers.
     private void GenerateCornerBets()
     {
+        BetType betType = BetType.Corner;
+        int payoutMultiplier = GetPayoutMultiplier(betType);
+
         for (int col = 0; col < 11; col++)
         {
             for (int row = 0; row < 2; row++)
@@ -235,9 +273,9 @@ public class RouletteTableLayout
                 };
 
                 CreateSpot($"Corner_{nums[0]}_{nums[1]}_{nums[2]}_{nums[3]}",
-                           BetType.Corner, 
-                           nums, 
-                           8, 
+                           betType, 
+                           nums,
+                           payoutMultiplier, 
                            GridPos(col + 0.5f, row + 0.5f),
                            cornerSpotsParent, 
                            $"{nums[0]}|{nums[1]}|{nums[2]}|{nums[3]}");
@@ -248,6 +286,9 @@ public class RouletteTableLayout
     // Generates six linde bets including 6 numbers.
     private void GenerateSixLineBets()
     {
+        BetType betType = BetType.SixLine;
+        int payoutMultiplier = GetPayoutMultiplier(betType);
+
         for (int col = 1; col < 12; col++)
         {
             int[] nums = { numberGrid[col-1,0], numberGrid[col-1,1], numberGrid[col-1,2],
@@ -259,9 +300,9 @@ public class RouletteTableLayout
 
             CreateSpot(
                 $"SixLine_{col}",
-                BetType.Street,
+                betType,
                 nums,
-                11,
+                payoutMultiplier,
                 new Vector3(x, y, z),
                 sixLineSpotsParent,
                 $"{nums[0]}-{nums[3]}");
@@ -271,6 +312,9 @@ public class RouletteTableLayout
     // Generates column bets
     private void GenerateColumnBets()
     {
+        BetType betType = BetType.Column;
+        int payoutMultiplier = GetPayoutMultiplier(betType);
+
         float colX = NumberGridOrigin.x + gridCellWidth * 13f + gridCellWidth * 0.5f;
         float y = NumberGridOrigin.y + chipYOffset;
 
@@ -286,10 +330,10 @@ public class RouletteTableLayout
             float z = NumberGridOrigin.z + row * gridCellDepth + gridCellDepth * 0.5f;
             
             CreateSpot(
-                $"Column_{row}", 
-                BetType.Column, 
-                nums.ToArray(), 
-                2,
+                $"Column_{row}",
+                betType, 
+                nums.ToArray(),
+                payoutMultiplier,
                 new Vector3(colX, y, z), 
                 outsideSpotsParent,
                 row == 0 ? "2to1" : row == 1 ? "2to1" : "2to1");
@@ -299,29 +343,32 @@ public class RouletteTableLayout
     // Generates dozen bets
     private void GenerateDozenBets()
     {
+        BetType betType = BetType.Column;
+        int payoutMultiplier = GetPayoutMultiplier(betType);
+
         float zCenter = outsideOrigin.z + chipYOffset + dozenRowHeight * 0.5f;
 
         CreateSpot(
-            "Dozen_1st", 
-            BetType.Dozen, 
+            "Dozen_1st",
+            betType, 
             GenerateRange(1, 12),
-            2,
+            payoutMultiplier,
             OutsidePos(0, 3, dozenRowHeight * -0.5f), 
             outsideSpotsParent, 
             "1st 12");
 
-        CreateSpot("Dozen_2nd", 
-            BetType.Dozen, 
+        CreateSpot("Dozen_2nd",
+            betType, 
             GenerateRange(13, 24),
-            2,
+            payoutMultiplier,
             OutsidePos(1, 3, dozenRowHeight * -0.5f), 
             outsideSpotsParent, 
             "2nd 12");
 
-        CreateSpot("Dozen_3rd", 
-            BetType.Dozen, 
-            GenerateRange(25, 36), 
-            2,
+        CreateSpot("Dozen_3rd",
+            betType, 
+            GenerateRange(25, 36),
+            payoutMultiplier,
             OutsidePos(2, 3, dozenRowHeight * -0.5f), 
             outsideSpotsParent, 
             "3rd 12");
@@ -344,10 +391,13 @@ public class RouletteTableLayout
 
         for (int i = 0; i < 6; i++)
         {
-            CreateSpot($"Outside_{labels[i]}", 
-                        types[i], 
-                        covered[i], 
-                        1,
+            BetType betType = types[i];
+            int payoutMultiplier = GetPayoutMultiplier(betType);
+
+            CreateSpot($"Outside_{labels[i]}",
+                        betType, 
+                        covered[i],
+                        payoutMultiplier,
                         OutsidePos(i, 6, zOff), 
                         outsideSpotsParent, 
                         labels[i]);
@@ -356,26 +406,41 @@ public class RouletteTableLayout
 
     // Creates bet spot objects
 
+
     private BetSpot CreateSpot(string spotName, BetType type, int[] numbers, int payout,
-                       Vector3 worldPos, Transform parent, string label)
+                     Vector3 worldPos, Transform parent, string label)
     {
-        GameObject go;
         if (betSpotPrefab == null)
         {
-            Debug.LogError($"Bet spot prefab is empty");
+            Debug.LogError("Bet spot prefab is empty");
             return null;
         }
 
-        go = Object.Instantiate(betSpotPrefab, worldPos, Quaternion.identity, parent);
+        GameObject go = (GameObject)PrefabUtility.InstantiatePrefab(betSpotPrefab, parent);
+
+        go.transform.position = worldPos;
+        go.transform.rotation = Quaternion.identity;
+
         go.name = spotName;
-        BetSpot spot = go.GetComponent<BetSpot>() ?? go.AddComponent<BetSpot>();
+
+        BetSpot spot = go.GetComponent<BetSpot>();
+
+        if (spot == null)
+            spot = go.AddComponent<BetSpot>();
+
         spot.betType = type;
         spot.coveredNumbers = numbers;
         spot.payout = payout;
         spot.spotLabel = label;
         spot.chipAnchorPoint = go.transform;
         spot.snapRadius = GetSnapRadius(type);
+
         allSpots.Add(spot);
+
+        // Editor'de değişikliklerin serialize olması için
+        EditorUtility.SetDirty(go);
+        EditorUtility.SetDirty(spot);
+
         return spot;
     }
 
@@ -395,7 +460,10 @@ public class RouletteTableLayout
     // Clear all spots
     private void ClearAllSpots()
     {
+        if(allSpots == null) return;
+        
         allSpots.Clear();
+        
         ClearChildren(straightSpotsParent);
         ClearChildren(splitSpotsParent);
         ClearChildren(streetSpotsParent);
@@ -414,7 +482,7 @@ public class RouletteTableLayout
     }
 
     // Helpers
-    int[] GenerateRange(int a, int b) 
+    private int[] GenerateRange(int a, int b) 
     { 
         var r = new List<int>();
 
@@ -422,7 +490,7 @@ public class RouletteTableLayout
 
         return r.ToArray(); 
     }
-    int[] GenerateEven()
+    private int[] GenerateEven()
     { 
         var r = new List<int>();
         
@@ -430,7 +498,7 @@ public class RouletteTableLayout
      
         return r.ToArray();
     }
-    int[] GenerateOdd() 
+    private int[] GenerateOdd() 
     { 
         var r = new List<int>(); 
         
@@ -438,14 +506,14 @@ public class RouletteTableLayout
         
         return r.ToArray(); 
     }
-    int[] GetRedNumbers()
+    private int[] GetRedNumbers()
     { 
         var r = new List<int>(redNumbers); 
         r.Sort(); 
 
         return r.ToArray();
     }
-    int[] GetBlackNumbers()
+    private int[] GetBlackNumbers()
     { 
         var r = new List<int>();
         for (int i = 1; i <= 36; i++)
