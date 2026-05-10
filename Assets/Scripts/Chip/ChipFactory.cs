@@ -11,7 +11,7 @@ using UnityEngine;
 //////////////////////////////////////////////////////////////////////////
 //  ChipFactory
 //////////////////////////////////////////////////////////////////////////
-// Single responsibility: instantiate a RouletteChip from the
+// Single responsibility: instantiate a Chip from the
 // correct prefab and initialise it. Callers never touch prefabs.
 public class ChipFactory
 {
@@ -36,7 +36,7 @@ public class ChipFactory
 
 
     // Creates a new chip of the given value. Returns null on failure.
-    public RouletteChip Create(int value)
+    public Chip Create(int value)
     {
         ChipDefinition def = definitions.Find(d => d.value == value);
 
@@ -47,7 +47,7 @@ public class ChipFactory
         }
 
         GameObject go = Object.Instantiate(def.prefab, container);
-        RouletteChip chip = go.GetComponent<RouletteChip>();
+        Chip chip = go.GetComponent<Chip>();
 
         if (chip == null)
         {
@@ -68,14 +68,14 @@ public class ChipFactory
 //////////////////////////////////////////////////////////////////////////
 //  ChipPool  (OBJECT POOL PATTERN)
 //////////////////////////////////////////////////////////////////////////
-// Recycles RouletteChip objects.
+// Recycles Chip objects.
 // Get()  ? pulls from pool or creates via factory.
 // Return() ? deactivates and puts back in pool.
 public class ChipPool
 {
     private readonly ChipFactory factory;
-    private readonly Dictionary<int, Queue<RouletteChip>> pools
-        = new Dictionary<int, Queue<RouletteChip>>();
+    private readonly Dictionary<int, Queue<Chip>> pools
+        = new Dictionary<int, Queue<Chip>>();
 
     public ChipPool(ChipFactory factory)
     {
@@ -85,11 +85,11 @@ public class ChipPool
     // Public API
 
     // Gets a chip of the given value (from pool or freshly created).
-    public RouletteChip Get(int value)
+    public Chip Get(int value)
     {
         EnsureBucket(value);
 
-        RouletteChip chip;
+        Chip chip;
         if (pools[value].Count > 0)
         {
             chip = pools[value].Dequeue();
@@ -106,7 +106,7 @@ public class ChipPool
     }
 
     // Returns a chip to the pool (deactivates it).
-    public void Return(RouletteChip chip)
+    public void Return(Chip chip)
     {
         if (chip == null) return;
 
@@ -121,7 +121,7 @@ public class ChipPool
     {
         for (int i = 0; i < count; i++)
         {
-            RouletteChip chip = factory.Create(value);
+            Chip chip = factory.Create(value);
             if (chip != null) Return(chip);
         }
         Debug.Log($"[ChipPool] Prewarmed {count} chips of value {value}.");
@@ -146,6 +146,6 @@ public class ChipPool
     private void EnsureBucket(int value)
     {
         if (!pools.ContainsKey(value))
-            pools[value] = new Queue<RouletteChip>();
+            pools[value] = new Queue<Chip>();
     }
 }

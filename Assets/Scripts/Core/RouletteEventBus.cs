@@ -12,10 +12,10 @@ public static class RouletteEventBus
     public static event Action OnBettingEnded;
 
     // Fired when a chip is placed on a bet spot.
-    public static event Action<RouletteChip, BetSpot> OnChipPlaced;
+    public static event Action<Chip, BetSpot> OnChipPlaced;
 
     // Fired when a chip is removed from a bet spot.
-    public static event Action<RouletteChip, BetSpot> OnChipRemoved;
+    public static event Action<Chip, BetSpot> OnChipRemoved;
 
     // Fired when the winning number is determined.
     public static event Action<int> OnWinningNumberDetermined;
@@ -37,8 +37,8 @@ public static class RouletteEventBus
     public static void RaiseBalanceChanged(int newBalance) => OnBalanceChanged?.Invoke(newBalance);
     public static void RaiseBettingStarted() => OnBettingStarted?.Invoke();
     public static void RaiseBettingEnded() => OnBettingEnded?.Invoke();
-    public static void RaiseChipPlaced(RouletteChip c, BetSpot s) => OnChipPlaced?.Invoke(c, s);
-    public static void RaiseChipRemoved(RouletteChip c, BetSpot s) => OnChipRemoved?.Invoke(c, s);
+    public static void RaiseChipPlaced(Chip c, BetSpot s) => OnChipPlaced?.Invoke(c, s);
+    public static void RaiseChipRemoved(Chip c, BetSpot s) => OnChipRemoved?.Invoke(c, s);
     public static void RaiseWinningNumber(int n) => OnWinningNumberDetermined?.Invoke(n);
     public static void RaiseRoundResult(int net) => OnRoundResult?.Invoke(net);
     public static void RaiseGameStateChanged(string name) => OnGameStateChanged?.Invoke(name);

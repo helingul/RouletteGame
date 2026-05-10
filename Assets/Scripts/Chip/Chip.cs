@@ -10,11 +10,11 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
-public class RouletteChip : MonoBehaviour
+public class Chip : MonoBehaviour
 {
     // Events (still raised for components that listen directly)
-    public event Action<RouletteChip> OnReturnedToTray;
-    public event Action<RouletteChip> OnPlacedOnBet;
+    public event Action<Chip> OnReturnedToTray;
+    public event Action<Chip> OnPlacedOnBet;
 
     // Config properties
     [Header("Chip Settings")]
@@ -104,7 +104,7 @@ public class RouletteChip : MonoBehaviour
         Ray ray = mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
         if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, raycastMask))
         {
-            RouletteChip chip = hit.collider.GetComponentInParent<RouletteChip>();
+            Chip chip = hit.collider.GetComponentInParent<Chip>();
             return chip == this;
         }
         return false;

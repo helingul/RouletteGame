@@ -57,7 +57,7 @@ public class RouletteGameManager : MonoBehaviour
 
     // Round data
     private int pendingWinningNumber = -1;
-    private readonly Dictionary<BetSpot, List<RouletteChip>> activeBets = new();
+    private readonly Dictionary<BetSpot, List<Chip>> activeBets = new();
     private readonly List<(BetSpot spot, int value)> lastRoundBets = new();
     private readonly List<int> history = new();
 
@@ -159,14 +159,14 @@ public class RouletteGameManager : MonoBehaviour
     //  Command Pattern wrappers (UI calls these)
 
     // Place a chip on a spot via command (supports Undo).
-    public void ExecutePlaceChip(RouletteChip chip, BetSpot spot)
+    public void ExecutePlaceChip(Chip chip, BetSpot spot)
     {
         if (!IsBettingAllowed()) return;
         invoker.Execute(new PlaceChipCommand(chip, spot));
     }
 
     // Remove a chip via command (supports Undo).
-    public void ExecuteRemoveChip(RouletteChip chip, BetSpot spot)
+    public void ExecuteRemoveChip(Chip chip, BetSpot spot)
     {
         if (!IsBettingAllowed()) return;
         invoker.Execute(new RemoveChipCommand(chip, spot));
@@ -200,10 +200,10 @@ public class RouletteGameManager : MonoBehaviour
 
 
     // EventBus handlers
-    private void HandleChipPlaced(RouletteChip chip, BetSpot spot)
+    private void HandleChipPlaced(Chip chip, BetSpot spot)
     {
         if (!activeBets.ContainsKey(spot))
-            activeBets[spot] = new List<RouletteChip>();
+            activeBets[spot] = new List<Chip>();
 
         if (!activeBets[spot].Contains(chip))
             activeBets[spot].Add(chip);
@@ -212,7 +212,7 @@ public class RouletteGameManager : MonoBehaviour
         RouletteEventBus.RaiseBalanceChanged(playerBalance);
     }
 
-    private void HandleChipRemoved(RouletteChip chip, BetSpot spot)
+    private void HandleChipRemoved(Chip chip, BetSpot spot)
     {
         if (activeBets.TryGetValue(spot, out var list))
             list.Remove(chip);

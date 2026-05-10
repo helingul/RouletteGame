@@ -30,7 +30,7 @@ public class BetSpot : MonoBehaviour
     [SerializeField] private float stackHeightStep = 0.025f;
 
     // Runtime states
-    [SerializeField] private List<RouletteChip> placedChips = new List<RouletteChip>();
+    [SerializeField] private List<Chip> placedChips = new List<Chip>();
     private bool isHighlighted;
 
     // Strategy (set once on first access)
@@ -67,12 +67,12 @@ public class BetSpot : MonoBehaviour
 
     // Public API
 
-    public List<RouletteChip> GetPlacedChips() => placedChips;
+    public List<Chip> GetPlacedChips() => placedChips;
 
-    public bool CanAcceptChip(RouletteChip chip)
+    public bool CanAcceptChip(Chip chip)
         => allowMultipleChips || placedChips.Count == 0;
 
-    public Result PlaceChip(RouletteChip chip)
+    public Result PlaceChip(Chip chip)
     {
         if (!CanAcceptChip(chip))
         {
@@ -96,7 +96,7 @@ public class BetSpot : MonoBehaviour
         return Result.Success;
     }
 
-    public void RemoveChip(RouletteChip chip)
+    public void RemoveChip(Chip chip)
     {
         if (!placedChips.Remove(chip)) return;
 
@@ -107,7 +107,7 @@ public class BetSpot : MonoBehaviour
     public void ClearAllChips()
     {
         // Iterate copy to avoid mutating during loop
-        var copy = new List<RouletteChip>(placedChips);
+        var copy = new List<Chip>(placedChips);
         foreach (var chip in copy)
         {
             if (chip != null) chip.ReturnToTray();

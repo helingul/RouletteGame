@@ -17,10 +17,10 @@ public interface IBetCommand
 // Places a chip on a bet spot. Undo removes it.
 public class PlaceChipCommand : IBetCommand
 {
-    private readonly RouletteChip chip;
+    private readonly Chip chip;
     private readonly BetSpot spot;
 
-    public PlaceChipCommand(RouletteChip chip, BetSpot spot)
+    public PlaceChipCommand(Chip chip, BetSpot spot)
     {
         this.chip = chip;
         this.spot = spot;
@@ -41,10 +41,10 @@ public class PlaceChipCommand : IBetCommand
 // Removes a chip from a spot. Undo places it back.
 public class RemoveChipCommand : IBetCommand
 {
-    private readonly RouletteChip chip;
+    private readonly Chip chip;
     private readonly BetSpot spot;
 
-    public RemoveChipCommand(RouletteChip chip, BetSpot spot)
+    public RemoveChipCommand(Chip chip, BetSpot spot)
     {
         this.chip = chip;
         this.spot = spot;
@@ -95,7 +95,7 @@ public class ClearTableCommand : IBetCommand
     {
         foreach (var (spot, value) in snapshot)
         {
-            RouletteChip chip = pool.Get(value);
+            Chip chip = pool.Get(value);
             if (chip != null) spot.PlaceChip(chip);
         }
     }
@@ -118,7 +118,7 @@ public class RepeatBetsCommand : IBetCommand
     {
         foreach (var (spot, value) in lastBets)
         {
-            RouletteChip chip = pool.Get(value);
+            Chip chip = pool.Get(value);
             if (chip != null) spot.PlaceChip(chip);
         }
     }

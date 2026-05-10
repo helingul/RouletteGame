@@ -27,7 +27,7 @@ public class ChipTray : MonoBehaviour
     private ChipPool pool;
 
     // Active chips per value (for stack-height calculation)
-    private Dictionary<int, List<RouletteChip>> activeChips = new();
+    private Dictionary<int, List<Chip>> activeChips = new();
 
     // Properties (used by ChipPool / factory)
     public ChipFactory Factory => factory;
@@ -58,7 +58,7 @@ public class ChipTray : MonoBehaviour
     // Public API
 
     // Spawns (or retrieves from pool) a chip of the given value.
-    public RouletteChip SpawnChip(int value)
+    public Chip SpawnChip(int value)
     {
         int activeCount = CountActive();
         if (activeCount >= maxChipsOnTable)
@@ -74,7 +74,7 @@ public class ChipTray : MonoBehaviour
             return null;
         }
 
-        RouletteChip chip = pool.Get(value);
+        Chip chip = pool.Get(value);
         if (chip == null) return null;
 
         // Position chip in tray
@@ -89,7 +89,7 @@ public class ChipTray : MonoBehaviour
     }
 
     // Calculates world-space tray position for a chip with stacking.
-    public Vector3 GetChipPosition(RouletteChip chip)
+    public Vector3 GetChipPosition(Chip chip)
     {
         ChipFactory.ChipDefinition def = factory.GetDefinition(chip.Value);
         if (def == null) return transform.position;
@@ -118,17 +118,17 @@ public class ChipTray : MonoBehaviour
     }
 
     // Private helpers
-    private void TrackActive(RouletteChip chip)
+    private void TrackActive(Chip chip)
     {
         if (!activeChips.TryGetValue(chip.Value, out var list))
         {
-            list = new List<RouletteChip>();
+            list = new List<Chip>();
             activeChips[chip.Value] = list;
         }
         if (!list.Contains(chip)) list.Add(chip);
     }
 
-    private void UntrackActive(RouletteChip chip)
+    private void UntrackActive(Chip chip)
     {
         if (activeChips.TryGetValue(chip.Value, out var list))
             list.Remove(chip);
@@ -142,9 +142,9 @@ public class ChipTray : MonoBehaviour
     }
 
     // EventBus handlers
-    private void HandleChipPlaced(RouletteChip chip, BetSpot _)
+    private void HandleChipPlaced(Chip chip, BetSpot _)
         => UntrackActive(chip);     // chip left the tray
 
-    private void HandleChipRemoved(RouletteChip chip, BetSpot _)
+    private void HandleChipRemoved(Chip chip, BetSpot _)
         => TrackActive(chip);       // chip returned to tray area
 }
