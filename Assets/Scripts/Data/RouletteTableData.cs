@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "RouletteTableData", menuName = "Data/RouletteTableData")]
+[CreateAssetMenu(fileName = "RouletteTableData", menuName = "Roulette/RouletteTableData")]
 public class RouletteTableData : ScriptableObject
 {
     //////////////////////////////////////////////////////////////////////////

@@ -11,8 +11,7 @@ public class ChipTray : MonoBehaviour
 {
     // Chip definitions
     [SerializeField]
-    private List<ChipFactory.ChipDefinition> chipDefinitions
-        = new List<ChipFactory.ChipDefinition>();
+    private ChipDefinitionList chipDefinitionList;
 
     [Header("Settings")]
     public int maxChipsOnTable = 20;
@@ -36,11 +35,11 @@ public class ChipTray : MonoBehaviour
     // Lifecycle
     private void Awake()
     {
-        factory = new ChipFactory(chipDefinitions, chipContainer, this);
+        factory = new ChipFactory(chipDefinitionList, chipContainer, this);
         pool = new ChipPool(factory);
 
         // Prewarm pool for each defined chip type
-        foreach (var def in chipDefinitions)
+        foreach (var def in chipDefinitionList.ChipDefinitions)
             pool.Prewarm(def.value, prewarmCountPerType);
 
         // Subscribe to event bus
@@ -91,7 +90,7 @@ public class ChipTray : MonoBehaviour
     // Calculates world-space tray position for a chip with stacking.
     public Vector3 GetChipPosition(Chip chip)
     {
-        ChipFactory.ChipDefinition def = factory.GetDefinition(chip.Value);
+        ChipFactory.ChipDefinition def = chipDefinitionList.TryGetChipDefinition(chip.Value);
         if (def == null) return transform.position;
 
         int stackIndex = 0;

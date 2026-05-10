@@ -23,22 +23,22 @@ public class ChipFactory
         public Vector3 relativeLocation;  // tray-local spawn point
     }
 
-    private readonly List<ChipDefinition> definitions;
+    private readonly ChipDefinitionList chipDefinitionList;
     private readonly Transform container;
     private readonly ChipTray tray;
 
-    public ChipFactory(List<ChipDefinition> definitions, Transform container, ChipTray tray)
+    public ChipFactory(ChipDefinitionList chipDefinitionList, Transform container, ChipTray tray)
     {
-        definitions = definitions;
-        container = container;
-        tray = tray;
+        this.chipDefinitionList = chipDefinitionList;
+        this.container = container;
+        this.tray = tray;
     }
 
 
     // Creates a new chip of the given value. Returns null on failure.
     public Chip Create(int value)
     {
-        ChipDefinition def = definitions.Find(d => d.value == value);
+        ChipDefinition def = chipDefinitionList.TryGetChipDefinition(value);
 
         if (def == null || def.prefab == null)
         {
@@ -59,9 +59,6 @@ public class ChipFactory
         chip.InititalizeChip(value, tray);
         return chip;
     }
-
-    public ChipDefinition GetDefinition(int value)
-        => definitions.Find(d => d.value == value);
 }
 
 
@@ -79,7 +76,7 @@ public class ChipPool
 
     public ChipPool(ChipFactory factory)
     {
-        factory = factory;
+        this.factory = factory;
     }
 
     // Public API

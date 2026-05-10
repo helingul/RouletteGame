@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 938e463797060984aab45455069fbcfb, type: 3}
+  m_Name: ChipDefinitionList
+  m_EditorClassIdentifier: 
+  chipDefinitions:
+  - value: 5
+    prefab: {fileID: 7679409189389914476, guid: 3ec823cdba2309f4c90c092f7e61e76e, type: 3}
+    relativeLocation: {x: 0, y: 0, z: 0}
+  - value: 20
+    prefab: {fileID: 5775262861395745513, guid: a5e907e6911bb494fa4f5854edc24c15, type: 3}
+    relativeLocation: {x: 2, y: 0, z: 0}
+  - value: 50
+    prefab: {fileID: 8687252925871942423, guid: 15949700e2b8b1941a5a67a56e91d81c, type: 3}
+    relativeLocation: {x: 4, y: 0, z: 0}
+  - value: 1000
+    prefab: {fileID: 3876669503880648488, guid: 600fae92b92b32c4281075f0c89e8c9d, type: 3}
+    relativeLocation: {x: 6, y: 0, z: 0}
+  - value: 5000
+    prefab: {fileID: 21197223319043066, guid: a62b508cca64d7040b4b99b7a4eaf4fe, type: 3}
+    relativeLocation: {x: 8, y: 0, z: 0}

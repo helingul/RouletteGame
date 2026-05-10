@@ -27,7 +27,7 @@ public class BetSpot : MonoBehaviour
     public Color normalColor = new Color(0f, 0.5f, 0f, 0.3f);
     public Color hoverColor = new Color(1f, 1f, 0f, 0.5f);
 
-    [SerializeField] private float stackHeightStep = 0.025f;
+    [SerializeField] private float stackHeightStep = 0.17f;
 
     // Runtime states
     [SerializeField] private List<Chip> placedChips = new List<Chip>();

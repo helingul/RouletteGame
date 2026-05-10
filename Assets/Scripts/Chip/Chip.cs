@@ -17,8 +17,6 @@ public class Chip : MonoBehaviour
     public event Action<Chip> OnPlacedOnBet;
 
     // Config properties
-    [Header("Chip Settings")]
-    [SerializeField] private int value = 10;
 
     [Header("Drag Settings")]
     [SerializeField] private float dragHeight = 0.7f;
@@ -49,7 +47,7 @@ public class Chip : MonoBehaviour
     private ChipPool chipPool;   // injected – used for pooled return
 
     // Public properties
-    public int Value => value;
+    public int Value { get; private set;}
     public bool IsDragging => isDragging;
     public bool IsPlaced => currentSpot != null;
     public BetSpot GetCurrentSpot() => currentSpot;
@@ -57,7 +55,7 @@ public class Chip : MonoBehaviour
     // Initialisation (called by ChipFactory / ChipTray)
     public void InititalizeChip(int chipValue, ChipTray tray, ChipPool pool = null)
     {
-        value = chipValue;
+        Value = chipValue;
         chipTray = tray;
         chipPool = pool;
     }
