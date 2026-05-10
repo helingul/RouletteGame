@@ -1,7 +1,13 @@
-﻿using UnityEngine;
+﻿//////////////////////////////////////////////////////////////////////////
+// Handles roullette ball spin logic.
+//////////////////////////////////////////////////////////////////////////
+
+using UnityEngine;
 
 public class RouletteBall : MonoBehaviour
 {
+    // Inspector refs
+
     [Header("References")]
     [SerializeField] private Transform orbitCenter;
     [SerializeField] private Transform ballMesh;
@@ -23,6 +29,8 @@ public class RouletteBall : MonoBehaviour
     [SerializeField] private float settleDuration = 0.45f;
     [SerializeField] private float bounceHeight = 0.08f;
 
+   
+    // Runtime data
     private float currentAngle;
     private float startAngle;
     private float targetAngle;

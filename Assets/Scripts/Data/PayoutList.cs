@@ -1,36 +1,38 @@
+//////////////////////////////////////////////////////////////////////////
+//  ScriptableObject – stores payout multipliers per BetType.
+//  Used by PayoutStrategyFactory
+//////////////////////////////////////////////////////////////////////////
+
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "PayoutList", menuName = "Data/Payout List")]
+[CreateAssetMenu(fileName = "PayoutList", menuName = "Roulette/Payout List")]
 public class PayoutList : ScriptableObject
 {
     [Serializable]
-    private struct Payout
+    private struct PayoutEntry
     {
         public BetType BetType;
         public int PayoutMultiplier;
     }
 
-    [SerializeField] private List<Payout> payouts;
+    [SerializeField] private List<PayoutEntry> payouts = new List<PayoutEntry>();
 
-    // Cached list for accessing payout multipliers
     private int[] payoutTable;
 
     private void OnEnable()
     {
-        int enumCount = Enum.GetValues(typeof(BetType)).Length;
+        int count = Enum.GetValues(typeof(BetType)).Length;
+        payoutTable = new int[count];
 
-        payoutTable = new int[enumCount];
-
-        foreach (var payout in payouts)
-        {
-            payoutTable[(int)payout.BetType] = payout.PayoutMultiplier;
-        }
+        foreach (var p in payouts)
+            payoutTable[(int)p.BetType] = p.PayoutMultiplier;
     }
 
     public int GetMultiplier(BetType betType)
     {
+        if (payoutTable == null) OnEnable();
         return payoutTable[(int)betType];
     }
 }

@@ -3,7 +3,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "RouletteTableData", menuName = "Data/RouletteTableData")]
 public class RouletteTableData : ScriptableObject
 {
-    ///////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////
     [Header("Number Bet Space")]
 
     [Tooltip("Left corner of the grid")]
@@ -27,7 +27,7 @@ public class RouletteTableData : ScriptableObject
     [Tooltip("Total width of outside bets")]
     [SerializeField] private float outsideTotalWidth = 18.5f;
 
-    ///////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////
     [Header("Common settings")]
     [Tooltip("Chip Y offset")]
     [SerializeField] private float chipYOffset = 0.01f;
@@ -35,7 +35,7 @@ public class RouletteTableData : ScriptableObject
     [Header("Prefab")]
     [SerializeField] private GameObject betSpotPrefab;
 
-    ///////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////
     // Properties
     public Vector3 NumberGridOrigin => numberGridOrigin;
     public float GridCellWidth => gridCellWidth;
@@ -46,5 +46,5 @@ public class RouletteTableData : ScriptableObject
     public float ChipYOffset => chipYOffset;
     public GameObject BetSpotPrefab => betSpotPrefab;
 
-    ///////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////
 }

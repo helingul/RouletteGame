@@ -1,145 +1,150 @@
+//////////////////////////////////////////////////////////////////////////
+//  Physical tray MonoBehaviour.
+//  - Owns ChipFactory (Factory Pattern) and ChipPool (Pool Pattern)
+//  - Listens to EventBus (Observer) to track placed/returned chips
+//////////////////////////////////////////////////////////////////////////
+
 using System.Collections.Generic;
 using UnityEngine;
-using static UnityEngine.Rendering.DebugUI;
 
 public class ChipTray : MonoBehaviour
 {
-    [System.Serializable]
-    public class ChipDefinition
-    {
-        public int value;
-        public ChipColor color;
-        public GameObject prefab;
-        public Vector3 relativeLocation;
-    }
-
-    public List<ChipDefinition> chipDefinitions = new List<ChipDefinition>();
+    // Chip definitions
+    [SerializeField]
+    private List<ChipFactory.ChipDefinition> chipDefinitions
+        = new List<ChipFactory.ChipDefinition>();
 
     [Header("Settings")]
     public int maxChipsOnTable = 20;
     public Transform chipContainer;
     public float stackHeightOffset = 1f;
 
-    private Dictionary<ChipColor, List<RouletteChip>> activeChips = new();
+    [Header("Pool")]
+    [SerializeField] private int prewarmCountPerType = 3;
 
+    // Internal subsystems
+    private ChipFactory factory;
+    private ChipPool pool;
+
+    // Active chips per value (for stack-height calculation)
+    private Dictionary<int, List<RouletteChip>> activeChips = new();
+
+    // Properties (used by ChipPool / factory)
+    public ChipFactory Factory => factory;
+    public ChipPool Pool => pool;
+
+    // Lifecycle
+    private void Awake()
+    {
+        factory = new ChipFactory(chipDefinitions, chipContainer, this);
+        pool = new ChipPool(factory);
+
+        // Prewarm pool for each defined chip type
+        foreach (var def in chipDefinitions)
+            pool.Prewarm(def.value, prewarmCountPerType);
+
+        // Subscribe to event bus
+        RouletteEventBus.OnChipPlaced += HandleChipPlaced;
+        RouletteEventBus.OnChipRemoved += HandleChipRemoved;
+    }
+
+    private void OnDestroy()
+    {
+        RouletteEventBus.OnChipPlaced -= HandleChipPlaced;
+        RouletteEventBus.OnChipRemoved -= HandleChipRemoved;
+        pool?.ClearAll();
+    }
+
+    // Public API
+
+    // Spawns (or retrieves from pool) a chip of the given value.
     public RouletteChip SpawnChip(int value)
     {
-        if (activeChips.Count >= maxChipsOnTable)
+        int activeCount = CountActive();
+        if (activeCount >= maxChipsOnTable)
         {
-            Debug.LogWarning("[ChipTray] Failed to spawn chip. Maximum chip count is reached.");
+            Debug.LogWarning("[ChipTray] Max chip count reached.");
             return null;
         }
 
         if (RouletteGameManager.Instance != null &&
             RouletteGameManager.Instance.Balance < value)
         {
-            Debug.LogWarning("[ChipTray] Failed to spawn chip. Insufficient balance.");
+            Debug.LogWarning("[ChipTray] Insufficient balance.");
             return null;
         }
 
-        ChipDefinition def = chipDefinitions.Find(d => d.value == value);
-        if (def == null || def.prefab == null)
-        {
-            Debug.LogError($"[ChipTray] Failed to spawn chip. Chip with value {value} cannot be found.");
-            return null;
-        }
+        RouletteChip chip = pool.Get(value);
+        if (chip == null) return null;
 
-        GameObject chipGO = Instantiate(def.prefab, chipContainer);
-        RouletteChip chip = chipGO.GetComponent<RouletteChip>();
-    
-        if (chip == null)
-        {
-            Debug.LogError("[ChipTray] Prefab'da RouletteChip component'i yok!");
-            Destroy(chipGO);
-            return null;
-        }
+        // Position chip in tray
+        Vector3 pos = GetChipPosition(chip);
+        Quaternion rot = Quaternion.identity;
+        chip.SetTrayPosition(pos, rot);
+        chip.gameObject.SetActive(true);
 
-        Vector3 position = GetChipPosition(chip);
-        chip.transform.position = position;
-
-        chip.InititalizeChip(value, def.color, this);
-        chip.SetTrayPosition(chipGO.transform.position, chipGO.transform.rotation);
-
-        AddChip(chip);
-
-        chip.OnReturnedToTray += HandleChipReturnedToTray;
-        chip.OnPlacedOnBet += HandleChipPlacedOnBet;
+        TrackActive(chip);
 
         return chip;
     }
 
+    // Calculates world-space tray position for a chip with stacking.
     public Vector3 GetChipPosition(RouletteChip chip)
     {
-        ChipDefinition def = chipDefinitions.Find(d => d.value == chip.Value);
-        if (def == null || def.prefab == null)
-        {
-            Debug.LogError($"[ChipTray] Failed to spawn chip. Chip with value {chip.Value} cannot be found.");
-            return Vector3.zero;
-        }
+        ChipFactory.ChipDefinition def = factory.GetDefinition(chip.Value);
+        if (def == null) return transform.position;
 
-        // Calculate chip count of same color
         int stackIndex = 0;
-        if (activeChips.TryGetValue(def.color, out var sameColorList))
-        {
-            stackIndex = sameColorList.Count;
-        }
+        if (activeChips.TryGetValue(def.value, out var list))
+            stackIndex = list.Count;
 
-        // Find stack position
-        Vector3 spawnPos = def.relativeLocation;
-        spawnPos.y += stackIndex * stackHeightOffset;
-
-        return transform.TransformPoint(spawnPos);
+        Vector3 local = def.relativeLocation;
+        local.y += stackIndex * stackHeightOffset;
+        return transform.TransformPoint(local);
     }
 
-    // Adds chip to the active chips
-    private void AddChip(RouletteChip chip)
-    {
-        if (!activeChips.TryGetValue(chip.ChipColor, out var list))
-        {
-            list = new List<RouletteChip>();
-            activeChips.Add(chip.ChipColor, list);
-        }
-
-        list.Add(chip);
-    }
-
-    private Result RemoveChip(RouletteChip chip)
-    {
-        if (activeChips.TryGetValue(chip.ChipColor, out var list))
-        {
-            list.Remove(chip);
-
-            return Result.Success;
-        }
-
-        return Result.Failure;
-    }
     public void ClearAll()
     {
-        foreach (var chipPair in activeChips)
+        foreach (var bucket in activeChips.Values)
         {
-            foreach (var chip in chipPair.Value)
+            foreach (var chip in bucket)
             {
-                if (chip != null)
-                {
-                    chip.OnReturnedToTray -= HandleChipReturnedToTray;
-                    chip.OnPlacedOnBet -= HandleChipPlacedOnBet;
-
-                    Destroy(chip.gameObject);
-                }
+                if (chip == null) continue;
+                pool.Return(chip);
             }
+            bucket.Clear();
         }
-
         activeChips.Clear();
     }
 
-    private void HandleChipReturnedToTray(RouletteChip chip)
+    // Private helpers
+    private void TrackActive(RouletteChip chip)
     {
-        AddChip(chip);
+        if (!activeChips.TryGetValue(chip.Value, out var list))
+        {
+            list = new List<RouletteChip>();
+            activeChips[chip.Value] = list;
+        }
+        if (!list.Contains(chip)) list.Add(chip);
     }
 
-    private void HandleChipPlacedOnBet(RouletteChip chip)
+    private void UntrackActive(RouletteChip chip)
     {
-        RemoveChip(chip);
+        if (activeChips.TryGetValue(chip.Value, out var list))
+            list.Remove(chip);
     }
+
+    private int CountActive()
+    {
+        int n = 0;
+        foreach (var b in activeChips.Values) n += b.Count;
+        return n;
+    }
+
+    // EventBus handlers
+    private void HandleChipPlaced(RouletteChip chip, BetSpot _)
+        => UntrackActive(chip);     // chip left the tray
+
+    private void HandleChipRemoved(RouletteChip chip, BetSpot _)
+        => TrackActive(chip);       // chip returned to tray area
 }

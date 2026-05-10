@@ -1,3 +1,9 @@
+//////////////////////////////////////////////////////////////////////////
+//  Physical chip GameObject the player drags around.
+//  - Uses ChipPool via ReturnToTray() (Object Pool Pattern)
+//  - Fires events through RouletteEventBus (Observer Pattern)
+//////////////////////////////////////////////////////////////////////////
+
 using System;
 using System.Collections;
 using UnityEngine;
@@ -6,12 +12,13 @@ using UnityEngine.InputSystem;
 
 public class RouletteChip : MonoBehaviour
 {
+    // Events (still raised for components that listen directly)
     public event Action<RouletteChip> OnReturnedToTray;
     public event Action<RouletteChip> OnPlacedOnBet;
 
+    // Config properties
     [Header("Chip Settings")]
     [SerializeField] private int value = 10;
-    [SerializeField] private ChipColor chipColor;
 
     [Header("Drag Settings")]
     [SerializeField] private float dragHeight = 0.7f;
@@ -20,19 +27,17 @@ public class RouletteChip : MonoBehaviour
     [SerializeField] private LayerMask tableLayer;
     [SerializeField] private LayerMask betSpotLayer;
     [SerializeField] private LayerMask raycastMask;
-   
 
     [Header("Visuals")]
     [SerializeField] private GameObject dragGlowEffect;
     [SerializeField] private TrailRenderer dragTrail;
 
-    private bool isDragging = false;
-    private bool isSnapping = false;
-    private Vector3 dragOffset;
+    // Runtime state
+    private bool isDragging;
     private Vector3 originalPosition;
     private Quaternion originalRotation;
-    private BetSpot currentSpot = null;
-    private BetSpot hoveredSpot = null;
+    private BetSpot currentSpot;
+    private BetSpot hoveredSpot;
     private Camera mainCamera;
     private Coroutine snapCoroutine;
 
@@ -41,26 +46,38 @@ public class RouletteChip : MonoBehaviour
     private BetSpot[] allSpots;
 
     private ChipTray chipTray;
-    public ChipColor ChipColor => chipColor;
+    private ChipPool chipPool;   // injected – used for pooled return
+
+    // Public properties
     public int Value => value;
-    public BetSpot GetCurrentSpot() => currentSpot;
     public bool IsDragging => isDragging;
     public bool IsPlaced => currentSpot != null;
+    public BetSpot GetCurrentSpot() => currentSpot;
 
-    public void InititalizeChip(int value, ChipColor chipColor, ChipTray chipTray)
+    // Initialisation (called by ChipFactory / ChipTray)
+    public void InititalizeChip(int chipValue, ChipTray tray, ChipPool pool = null)
     {
-        this.chipColor = chipColor;
-        this.value = value;
-        this.chipTray = chipTray;
+        value = chipValue;
+        chipTray = tray;
+        chipPool = pool;
     }
-    public void SetCurrentSpot(BetSpot spot)
+
+    public void SetCurrentSpot(BetSpot spot) => currentSpot = spot;
+
+    public void SetTrayPosition(Vector3 pos, Quaternion rot)
     {
-        currentSpot = spot;
+        trayPosition = pos;
+        trayRotation = rot;
+        transform.position = pos;
+        transform.rotation = rot;
     }
-    void Awake()
+
+    // Unity lifecycle
+    private void Awake()
     {
-        allSpots = UnityEngine.Object.FindObjectsByType<BetSpot>(FindObjectsInactive.Include,
-                                                     FindObjectsSortMode.None);
+        // TODO: Fix this 
+        allSpots = UnityEngine.Object.FindObjectsByType<BetSpot>(
+                           FindObjectsInactive.Include, FindObjectsSortMode.None);
         mainCamera = Camera.main;
         trayPosition = transform.position;
         trayRotation = transform.rotation;
@@ -68,202 +85,155 @@ public class RouletteChip : MonoBehaviour
         originalRotation = transform.rotation;
     }
 
-    private bool IsChipPressed()
-    {
-        if (EventSystem.current.IsPointerOverGameObject())
-            return false;
-
-        Ray ray = mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
-
-        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, raycastMask))
-        {
-            RouletteChip chip = hit.collider.GetComponentInParent<RouletteChip>();
-
-            if (chip != this)
-                return false;
-        }
-        else
-        {
-            return false;
-        }
-
-        return true;
-    }
     private void Update()
     {
-        if (Mouse.current.leftButton.wasPressedThisFrame)
+        if (Mouse.current.leftButton.wasPressedThisFrame && IsChipPressed()) StartDragging();
+        if (Mouse.current.leftButton.isPressed && isDragging)
         {
-            if(IsChipPressed())
-            {
-                StartDragging();
-            }
-        }
-
-        if (Mouse.current.leftButton.isPressed)
-        {
-            if (!isDragging) return;
             UpdateDragPosition();
             FindAndHighlightNearestSpot();
         }
-
-        if (Mouse.current.leftButton.wasReleasedThisFrame)
-        {
-            if (!isDragging) return;
-            StopDragging();
-        }
+        if (Mouse.current.leftButton.wasReleasedThisFrame && isDragging) StopDragging();
     }
-   
+
+    // Drag logic
+    private bool IsChipPressed()
+    {
+        if (EventSystem.current.IsPointerOverGameObject()) return false;
+
+        Ray ray = mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
+        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, raycastMask))
+        {
+            RouletteChip chip = hit.collider.GetComponentInParent<RouletteChip>();
+            return chip == this;
+        }
+        return false;
+    }
+
     private void StartDragging()
     {
         isDragging = true;
 
-        // Remove from previous spot
         if (currentSpot != null)
-        {
             currentSpot.RemoveChip(this);
-        }
 
         originalPosition = transform.position;
         originalRotation = transform.rotation;
 
-        // Stop current coroutine
-        if (snapCoroutine != null)
-            StopCoroutine(snapCoroutine);
+        if (snapCoroutine != null) StopCoroutine(snapCoroutine);
 
-        // Visual effects
         if (dragGlowEffect != null) dragGlowEffect.SetActive(true);
         if (dragTrail != null) dragTrail.enabled = true;
 
-        // Move chip position up
         transform.position += Vector3.up * dragHeight;
     }
 
     private void UpdateDragPosition()
     {
         Ray ray = mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
-        RaycastHit hit;
 
-        // Check betSpotLayer
-        if (Physics.Raycast(ray, out hit, 100f, betSpotLayer))
+        if (Physics.Raycast(ray, out RaycastHit hit, 100f, betSpotLayer))
         {
-            Vector3 pos = hit.point;
-            pos.y += dragHeight;
-            transform.position = pos;
+            transform.position = hit.point + Vector3.up * dragHeight;
             return;
         }
-
-        // Check tableLayer
         if (Physics.Raycast(ray, out hit, 100f, tableLayer))
         {
-            Vector3 pos = hit.point;
-            pos.y += dragHeight;
-            transform.position = pos;
+            transform.position = hit.point + Vector3.up * dragHeight;
             return;
         }
 
-        // If both failes move on a plane
-        Plane dragPlane = new Plane(Vector3.up, Vector3.up * dragHeight);
-        float distance;
-        if (dragPlane.Raycast(ray, out distance))
-        {
-            transform.position = ray.GetPoint(distance);
-        }
+        Plane plane = new Plane(Vector3.up, Vector3.up * dragHeight);
+        if (plane.Raycast(ray, out float dist))
+            transform.position = ray.GetPoint(dist);
     }
 
     private void StopDragging()
     {
         isDragging = false;
 
-        // Remove visual effects
         if (dragGlowEffect != null) dragGlowEffect.SetActive(false);
         if (dragTrail != null) dragTrail.enabled = false;
 
-        // Remove previous highlights
-        if (hoveredSpot != null)
-        {
-            hoveredSpot.SetHighlight(false);
-            hoveredSpot = null;
-        }
+        if (hoveredSpot != null) { hoveredSpot.SetHighlight(false); hoveredSpot = null; }
 
-        // Find nearest spot
-        BetSpot nearestSpot = FindNearestValidSpot();
+        BetSpot nearest = FindNearestValidSpot();
 
-        if (nearestSpot != null && nearestSpot.CanAcceptChip(this))
+        if (nearest != null && nearest.CanAcceptChip(this))
         {
-            if(nearestSpot.PlaceChip(this) == Result.Success)
-            {
+            if (nearest.PlaceChip(this) == Result.Success)
                 OnPlacedOnBet?.Invoke(this);
-            }
         }
         else
         {
             ReturnToTray();
         }
     }
+
     private BetSpot FindNearestValidSpot()
     {
         Ray ray = mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
-
         if (Physics.Raycast(ray, out RaycastHit hit, 100f, betSpotLayer))
-        {
-            if (hit.collider.TryGetComponent(out BetSpot spot))
-            {
-                if (spot.CanAcceptChip(this))
-                    return spot;
-            }
-        }
-
+            if (hit.collider.TryGetComponent(out BetSpot spot) && spot.CanAcceptChip(this))
+                return spot;
         return null;
     }
 
     private void FindAndHighlightNearestSpot()
     {
         BetSpot nearest = FindNearestValidSpot();
+        if (nearest == hoveredSpot) return;
 
-        if (nearest != hoveredSpot)
-        {
-            // Remove old highlight
-            if (hoveredSpot != null)
-                hoveredSpot.SetHighlight(false);
-
-            // Add new highlight
-            hoveredSpot = nearest;
-            if (hoveredSpot != null)
-                hoveredSpot.SetHighlight(true);
-        }
+        if (hoveredSpot != null) hoveredSpot.SetHighlight(false);
+        hoveredSpot = nearest;
+        if (hoveredSpot != null) hoveredSpot.SetHighlight(true);
     }
+
 
     public void SnapToPosition(Vector3 targetPos, Quaternion targetRot)
     {
-        if (snapCoroutine != null)
-            StopCoroutine(snapCoroutine);
+        if (snapCoroutine != null) StopCoroutine(snapCoroutine);
         snapCoroutine = StartCoroutine(SmoothMove(targetPos, targetRot, snapAnimDuration));
     }
+
+
+    // Returns chip to the tray.
+    // If a ChipPool is assigned, the chip will be returned to the pool
+    // after the animation completes instead of staying alive.
     public void ReturnToTray()
     {
-        bool wasPlacedToBet = currentSpot != null;
-       
-        if (wasPlacedToBet)
+        bool wasPlaced = currentSpot != null;
+
+        if (wasPlaced)
         {
             currentSpot.RemoveChip(this);
             currentSpot = null;
         }
 
-        if (snapCoroutine != null)
-            StopCoroutine(snapCoroutine);
+        if (snapCoroutine != null) StopCoroutine(snapCoroutine);
 
-        if (wasPlacedToBet)
+        if (wasPlaced)
         {
-            trayPosition = chipTray.GetChipPosition(this);
+            trayPosition = chipTray != null
+                ? chipTray.GetChipPosition(this)
+                : trayPosition;
             OnReturnedToTray?.Invoke(this);
         }
 
-        snapCoroutine = StartCoroutine(SmoothMove(trayPosition, trayRotation, returnAnimDuration));
+        snapCoroutine = StartCoroutine(ReturnAndPool(trayPosition, trayRotation, returnAnimDuration));
     }
 
-    IEnumerator SmoothMove(Vector3 targetPos, Quaternion targetRot, float duration)
+    private IEnumerator ReturnAndPool(Vector3 targetPos, Quaternion targetRot, float duration)
     {
-        isSnapping = true;
+        yield return SmoothMove(targetPos, targetRot, duration);
+
+        // If managed by a pool, return there; otherwise just stay put (tray manages it)
+        if (chipPool != null)
+            chipPool.Return(this);
+    }
+
+    private IEnumerator SmoothMove(Vector3 targetPos, Quaternion targetRot, float duration)
+    {
         Vector3 startPos = transform.position;
         Quaternion startRot = transform.rotation;
         float elapsed = 0f;
@@ -271,11 +241,7 @@ public class RouletteChip : MonoBehaviour
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
-            float t = elapsed / duration;
-
-            // Ease out cubic
-            t = 1f - Mathf.Pow(1f - t, 3f);
-
+            float t = 1f - Mathf.Pow(1f - Mathf.Clamp01(elapsed / duration), 3f);
             transform.position = Vector3.Lerp(startPos, targetPos, t);
             transform.rotation = Quaternion.Lerp(startRot, targetRot, t);
             yield return null;
@@ -283,13 +249,5 @@ public class RouletteChip : MonoBehaviour
 
         transform.position = targetPos;
         transform.rotation = targetRot;
-        isSnapping = false;
-    }
-    public void SetTrayPosition(Vector3 pos, Quaternion rot)
-    {
-        trayPosition = pos;
-        trayRotation = rot;
-        transform.position = pos;
-        transform.rotation = rot;
     }
 }
