@@ -156,7 +156,7 @@ public class Chip : MonoBehaviour
 
         if (nearest != null && nearest.CanAcceptChip(this))
         {
-            if(nearest.PlaceChip(this) == Result.Failure)
+            if(RouletteGameManager.Instance.ExecutePlaceChip(this, nearest) == Result.Failure)
             {
                 ReturnToTray();
             }

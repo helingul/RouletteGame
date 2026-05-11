@@ -4,12 +4,13 @@
 //////////////////////////////////////////////////////////////////////////
 
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 // Interface
 public interface IBetCommand
 {
-    void Execute();
+    Result Execute();
     void Undo();
 }
 
@@ -26,9 +27,9 @@ public class PlaceChipCommand : IBetCommand
         this.spot = spot;
     }
 
-    public void Execute()
+    public Result Execute()
     {
-        spot.PlaceChip(chip);
+        return spot.PlaceChip(chip);
     }
 
     public void Undo()
@@ -50,9 +51,10 @@ public class RemoveChipCommand : IBetCommand
         this.spot = spot;
     }
 
-    public void Execute()
+    public Result Execute()
     {
         chip.ReturnToTray();
+        return Result.Success;
     }
 
     public void Undo()
@@ -71,15 +73,15 @@ public class ClearTableCommand : IBetCommand
     private readonly List<(BetSpot spot, int value)> snapshot
         = new List<(BetSpot, int)>();
 
-    private readonly ChipPool pool;
+    private readonly ChipTray chipTray;
 
-    public ClearTableCommand(RouletteTableLayout layout, ChipPool pool)
+    public ClearTableCommand(RouletteTableLayout layout, ChipTray chipTray)
     {
         this.layout = layout;
-        this.pool = pool;
+        this.chipTray = chipTray;
     }
 
-    public void Execute()
+    public Result Execute()
     {
         snapshot.Clear();
         foreach (var spot in layout.AllSpots)
@@ -89,13 +91,15 @@ public class ClearTableCommand : IBetCommand
         }
 
         layout.ClearAllBets();
+        
+        return Result.Success;
     }
 
     public void Undo()
     {
         foreach (var (spot, value) in snapshot)
         {
-            Chip chip = pool.Get(value);
+            Chip chip = chipTray.GetChipFromTray(value);
             if (chip != null) spot.PlaceChip(chip);
         }
     }
@@ -114,13 +118,21 @@ public class RepeatBetsCommand : IBetCommand
         this.pool = pool;
     }
 
-    public void Execute()
+    public Result Execute()
     {
         foreach (var (spot, value) in lastBets)
         {
             Chip chip = pool.Get(value);
-            if (chip != null) spot.PlaceChip(chip);
+            if (chip != null)
+            {
+                if(spot.PlaceChip(chip) == Result.Failure)
+                {
+                    return Result.Failure;
+                }
+            }
         }
+
+        return Result.Success;
     }
 
     public void Undo()
@@ -139,11 +151,14 @@ public class BetCommandInvoker
 {
     private readonly Stack<IBetCommand> history = new Stack<IBetCommand>();
 
-    public void Execute(IBetCommand command)
+    public Result Execute(IBetCommand command)
     {
-        command.Execute();
+        Result result = command.Execute();
         history.Push(command);
+        
         Debug.Log($"[BetCommandInvoker] Executed: {command.GetType().Name}  stack={history.Count}");
+        
+        return result;
     }
 
     public void Undo()

@@ -4,6 +4,7 @@ public enum Result
     Success,
     Failure,
 }
+
 public enum BetType
 {
     // Inside Bets

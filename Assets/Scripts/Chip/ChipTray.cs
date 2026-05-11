@@ -83,6 +83,20 @@ public class ChipTray : MonoBehaviour
         return chip;
     }
 
+    // Returns chip with given value from tray.
+    public Chip GetChipFromTray(int value)
+    {
+        if (activeChips.TryGetValue(value, out List<Chip> chips))
+        {
+            if (chips.Count > 0)
+            {
+                return chips[0];
+            }
+        }
+
+        return null;
+    }
+
     // Calculates world-space tray position for a chip with stacking.
     public Vector3 GetChipPosition(Chip chip)
     {

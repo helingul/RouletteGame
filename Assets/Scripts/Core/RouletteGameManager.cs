@@ -163,10 +163,10 @@ public class RouletteGameManager : MonoBehaviour
     //  Command Pattern wrappers (UI calls these)
 
     // Place a chip on a spot via command (supports Undo).
-    public void ExecutePlaceChip(Chip chip, BetSpot spot)
+    public Result ExecutePlaceChip(Chip chip, BetSpot spot)
     {
-        if (!IsBettingAllowed()) return;
-        invoker.Execute(new PlaceChipCommand(chip, spot));
+        if (!IsBettingAllowed()) return Result.Failure;
+        return invoker.Execute(new PlaceChipCommand(chip, spot));
     }
 
     // Remove a chip via command (supports Undo).
@@ -180,7 +180,7 @@ public class RouletteGameManager : MonoBehaviour
     public void ExecuteClearTable()
     {
         if (!IsBettingAllowed()) return;
-        invoker.Execute(new ClearTableCommand(tableLayout, chipTray.Pool));
+        invoker.Execute(new ClearTableCommand(tableLayout, chipTray));
     }
 
     // Undo the last bet action.
