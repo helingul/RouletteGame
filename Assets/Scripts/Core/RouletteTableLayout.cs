@@ -4,6 +4,8 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
+
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -30,7 +32,7 @@ public class RouletteTableLayout : MonoBehaviour
     private Transform cornerParent, sixLineParent, outsideParent;
 
     // Spots list
-    private readonly List<BetSpot> allSpots = new List<BetSpot>();
+    private List<BetSpot> allSpots = new List<BetSpot>();
     public IReadOnlyList<BetSpot> AllSpots => allSpots;
 
     // Number grid (European layout)
@@ -78,6 +80,10 @@ public class RouletteTableLayout : MonoBehaviour
         return true;
     }
 
+    private void Awake()
+    {
+        allSpots = GetComponentsInChildren<BetSpot>().ToList();
+    }
     private void BuildParentHierarchy()
     {
         straightParent = CreateChild("StraightSpots");
@@ -301,8 +307,6 @@ public class RouletteTableLayout : MonoBehaviour
         spot.Configure(type, numbers, payout, label);
         spot.chipAnchorPoint = go.transform;
         spot.snapRadius = SnapRadius(type);
-
-        allSpots.Add(spot);
 
 #if UNITY_EDITOR
         EditorUtility.SetDirty(go);

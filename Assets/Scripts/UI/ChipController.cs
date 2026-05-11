@@ -3,34 +3,37 @@ using UnityEngine.UI;
 
 public class ChipController : MonoBehaviour
 {
-    [SerializeField] private Button button5;
-    [SerializeField] private Button button20;
-    [SerializeField] private Button button50;
-    [SerializeField] private Button button1000;
-    [SerializeField] private Button button5000;
-    [SerializeField] private ChipTray chipTray;
+    [SerializeField] private Button AddChipButton_5;
+    [SerializeField] private Button AddChipButton_20;
+    [SerializeField] private Button AddChipButton_50;
+    [SerializeField] private Button AddChipButton_1000;
+    [SerializeField] private Button AddChipButton_5000;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-    }
+    [SerializeField] private Button UndoButton;
+    [SerializeField] private Button ClearButton;
 
     private void Awake()
     {
-        button5.onClick.AddListener(OnClick5);
-        button20.onClick.AddListener(OnClick20);
-        button50.onClick.AddListener(OnClick50);
-        button1000.onClick.AddListener(OnClick1000);
-        button5000.onClick.AddListener(OnClick5000);
+        AddChipButton_5.onClick.AddListener(OnClick5);
+        AddChipButton_20.onClick.AddListener(OnClick20);
+        AddChipButton_50.onClick.AddListener(OnClick50);
+        AddChipButton_1000.onClick.AddListener(OnClick1000);
+        AddChipButton_5000.onClick.AddListener(OnClick5000);
+
+        UndoButton.onClick.AddListener(UndoLastChip);
+        ClearButton.onClick.AddListener(ClerarChips);
 
     }
     private void OnDestroy()
     {
-        button5.onClick.RemoveListener(OnClick5);
-        button20.onClick.RemoveListener(OnClick20);
-        button50.onClick.RemoveListener(OnClick50);
-        button1000.onClick.RemoveListener(OnClick1000);
-        button5000.onClick.RemoveListener(OnClick5000);
+        AddChipButton_5.onClick.RemoveListener(OnClick5);
+        AddChipButton_20.onClick.RemoveListener(OnClick20);
+        AddChipButton_50.onClick.RemoveListener(OnClick50);
+        AddChipButton_1000.onClick.RemoveListener(OnClick1000);
+        AddChipButton_5000.onClick.RemoveListener(OnClick5000);
+
+        UndoButton.onClick.RemoveListener(UndoLastChip);
+        ClearButton.onClick.RemoveListener(ClerarChips);
     }
     private void OnClick5() => OnAddChipClicked(5);
     private void OnClick20() => OnAddChipClicked(20);
@@ -40,6 +43,16 @@ public class ChipController : MonoBehaviour
 
     private void OnAddChipClicked(int value)
     {
-        chipTray.SpawnChip(value);
+        RouletteEventBus.RaiseChipAdded(value);
+    }
+
+    private void UndoLastChip()
+    {
+        RouletteGameManager.Instance.UndoLastBet();
+    }
+
+    private void ClerarChips()
+    {
+        RouletteGameManager.Instance.ExecuteClearTable();
     }
 }

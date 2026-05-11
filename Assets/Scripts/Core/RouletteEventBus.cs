@@ -17,6 +17,9 @@ public static class RouletteEventBus
     // Fired when a chip is removed from a bet spot.
     public static event Action<Chip, BetSpot> OnChipRemoved;
 
+    // Fired when a chip is added to tray. Sends chip value.
+    public static event Action<int> OnChipAdded;
+
     // Fired when the winning number is determined.
     public static event Action<int> OnWinningNumberDetermined;
 
@@ -32,6 +35,13 @@ public static class RouletteEventBus
     // Fired when the spin animation finishes.
     public static event Action OnSpinFinished;
 
+    // Fired when a player tries to place a chip on a bet spot with insufficient balance
+    public static event Action OnBetExceedsBalance;
+    
+    // Fired when chip tray capacity is reached.
+    public static event Action OnChipTrayFull;
+
+
     //  Raise helpers
 
     public static void RaiseBalanceChanged(int newBalance) => OnBalanceChanged?.Invoke(newBalance);
@@ -39,11 +49,14 @@ public static class RouletteEventBus
     public static void RaiseBettingEnded() => OnBettingEnded?.Invoke();
     public static void RaiseChipPlaced(Chip c, BetSpot s) => OnChipPlaced?.Invoke(c, s);
     public static void RaiseChipRemoved(Chip c, BetSpot s) => OnChipRemoved?.Invoke(c, s);
+    public static void RaiseChipAdded(int v) => OnChipAdded?.Invoke(v);
     public static void RaiseWinningNumber(int n) => OnWinningNumberDetermined?.Invoke(n);
     public static void RaiseRoundResult(int net) => OnRoundResult?.Invoke(net);
     public static void RaiseGameStateChanged(string name) => OnGameStateChanged?.Invoke(name);
     public static void RaiseSpinStarted() => OnSpinStarted?.Invoke();
     public static void RaiseSpinFinished() => OnSpinFinished?.Invoke();
+    public static void RaiseBetExceedsBalance() => OnBetExceedsBalance?.Invoke();
+    public static void RaiseChipTrayFull() => OnChipTrayFull?.Invoke();
 
     // Cleanup (call on scene unload)
     public static void ClearAllListeners()
@@ -53,10 +66,13 @@ public static class RouletteEventBus
         OnBettingEnded = null;
         OnChipPlaced = null;
         OnChipRemoved = null;
+        OnChipAdded = null;
         OnWinningNumberDetermined = null;
         OnRoundResult = null;
         OnGameStateChanged = null;
         OnSpinStarted = null;
         OnSpinFinished = null;
+        OnBetExceedsBalance = null;
+        OnChipTrayFull = null;
     }
 }

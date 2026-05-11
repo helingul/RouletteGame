@@ -12,9 +12,6 @@ using UnityEngine.InputSystem;
 
 public class Chip : MonoBehaviour
 {
-    // Events (still raised for components that listen directly)
-    public event Action<Chip> OnReturnedToTray;
-    public event Action<Chip> OnPlacedOnBet;
 
     // Config properties
 
@@ -159,8 +156,10 @@ public class Chip : MonoBehaviour
 
         if (nearest != null && nearest.CanAcceptChip(this))
         {
-            if (nearest.PlaceChip(this) == Result.Success)
-                OnPlacedOnBet?.Invoke(this);
+            if(nearest.PlaceChip(this) == Result.Failure)
+            {
+                ReturnToTray();
+            }
         }
         else
         {
@@ -215,7 +214,6 @@ public class Chip : MonoBehaviour
             trayPosition = chipTray != null
                 ? chipTray.GetChipPosition(this)
                 : trayPosition;
-            OnReturnedToTray?.Invoke(this);
         }
 
         snapCoroutine = StartCoroutine(ReturnAndPool(trayPosition, trayRotation, returnAnimDuration));

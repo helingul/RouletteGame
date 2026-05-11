@@ -69,11 +69,15 @@ public class BetSpot : MonoBehaviour
 
     public List<Chip> GetPlacedChips() => placedChips;
 
-    public bool CanAcceptChip(Chip chip)
-        => allowMultipleChips || placedChips.Count == 0;
-
+    public bool CanAcceptChip(Chip chip) => allowMultipleChips || placedChips.Count == 0;
     public Result PlaceChip(Chip chip)
     {
+        if (RouletteGameManager.Instance.Balance <= chip.Value)
+        {
+            RouletteEventBus.RaiseBetExceedsBalance();
+            return Result.Failure;
+        }
+
         if (!CanAcceptChip(chip))
         {
             Debug.LogWarning($"[BetSpot] Cannot place chip on {spotLabel}.");

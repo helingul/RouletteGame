@@ -10,13 +10,12 @@ using UnityEngine;
 public class ChipTray : MonoBehaviour
 {
     // Chip definitions
-    [SerializeField]
-    private ChipDefinitionList chipDefinitionList;
+    [SerializeField] private ChipDefinitionList chipDefinitionList;
 
     [Header("Settings")]
-    public int maxChipsOnTable = 20;
-    public Transform chipContainer;
-    public float stackHeightOffset = 1f;
+    [SerializeField] private int maxChipsOnTable = 20;
+    [SerializeField] private Transform chipContainer;
+    [SerializeField] private float stackHeightOffset = 1f;
 
     [Header("Pool")]
     [SerializeField] private int prewarmCountPerType = 3;
@@ -45,12 +44,15 @@ public class ChipTray : MonoBehaviour
         // Subscribe to event bus
         RouletteEventBus.OnChipPlaced += HandleChipPlaced;
         RouletteEventBus.OnChipRemoved += HandleChipRemoved;
+        RouletteEventBus.OnChipAdded += HandleChipAdded;
     }
 
     private void OnDestroy()
     {
         RouletteEventBus.OnChipPlaced -= HandleChipPlaced;
         RouletteEventBus.OnChipRemoved -= HandleChipRemoved;
+        RouletteEventBus.OnChipAdded -= HandleChipAdded;
+
         pool?.ClearAll();
     }
 
@@ -62,14 +64,8 @@ public class ChipTray : MonoBehaviour
         int activeCount = CountActive();
         if (activeCount >= maxChipsOnTable)
         {
+            RouletteEventBus.RaiseChipTrayFull();
             Debug.LogWarning("[ChipTray] Max chip count reached.");
-            return null;
-        }
-
-        if (RouletteGameManager.Instance != null &&
-            RouletteGameManager.Instance.Balance < value)
-        {
-            Debug.LogWarning("[ChipTray] Insufficient balance.");
             return null;
         }
 
@@ -146,4 +142,7 @@ public class ChipTray : MonoBehaviour
 
     private void HandleChipRemoved(Chip chip, BetSpot _)
         => TrackActive(chip);       // chip returned to tray area
+
+    private void HandleChipAdded(int value)
+      => SpawnChip(value);          // chip added to the tray
 }

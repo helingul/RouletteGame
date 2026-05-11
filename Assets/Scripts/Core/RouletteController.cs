@@ -32,7 +32,7 @@ public class RouletteController : MonoBehaviour
     // Lifecycle
     private void Start()
     {
-        pockets = wheelPivot.GetComponentsInChildren<SlotMarker>();
+        pockets = pocketsParent.GetComponentsInChildren<SlotMarker>();
     }
 
     private void Update()

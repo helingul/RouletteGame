@@ -33,14 +33,12 @@ public class RouletteGameManager : MonoBehaviour
 
     // Inspector refs
     [Header("Settings")]
-    public int playerBalance = 1000;
-    public int minBet = 1;
-    public int maxBet = 500;
+    [SerializeField] private int playerBalance = 1000;
 
     [Header("References")]
-    public RouletteTableLayout tableLayout;
-    public ChipTray chipTray;
-    public RouletteController RouletteController;
+    [SerializeField] private RouletteTableLayout tableLayout;
+    [SerializeField] private ChipTray chipTray;
+    [SerializeField] private RouletteController rouletteController;
 
     // Holds current game state
     private IGameState currentState;
@@ -62,14 +60,16 @@ public class RouletteGameManager : MonoBehaviour
     private readonly List<int> history = new();
 
     // Public readonly accessors
+    public RouletteController RouletteController => rouletteController;
     public int PendingWinningNumber => pendingWinningNumber;
     public int Balance => playerBalance;
     public List<int> History => history;
     public bool IsBettingAllowed() => currentState is PlacingBetsState;
+    public int TotalWin { get; private set; } = 0;
 
     // Initialization
     private void InitializeStateMachine()
-        => TransitionTo(stateWaiting);
+        => TransitionTo(stateBetting);
 
     private void SubscribeToEventBus()
     {
@@ -102,18 +102,21 @@ public class RouletteGameManager : MonoBehaviour
     public void StartBettingPhase()
     {
         if (currentState is SpinningWheelState) return;
+
+        pendingWinningNumber = -1;
+
         TransitionTo(stateBetting);
     }
 
     // Closes betting, spins the wheel towards winningNumber.
     // Pass -1 to generate a random number.
-    public void StartSpin(int winningNumber = -1)
+    public void StartSpin()
     {
         if (!(currentState is PlacingBetsState)) return;
 
-        pendingWinningNumber = winningNumber < 0
-            ? Random.Range(0, 37)
-            : winningNumber;
+        pendingWinningNumber = IsValidNumber(pendingWinningNumber)
+            ? pendingWinningNumber
+            : Random.Range(0, 37);
 
         TransitionTo(stateSpinning);
     }
@@ -147,6 +150,7 @@ public class RouletteGameManager : MonoBehaviour
 
         int net = totalWin - totalBet;
         playerBalance += net;
+        TotalWin += totalWin;
 
         history.Add(pendingWinningNumber);
 
@@ -198,6 +202,7 @@ public class RouletteGameManager : MonoBehaviour
         invoker.Execute(new RepeatBetsCommand(lastRoundBets, chipTray.Pool));
     }
 
+    public void SetWinningNumber(int number) => pendingWinningNumber = number;
 
     // EventBus handlers
     private void HandleChipPlaced(Chip chip, BetSpot spot)

@@ -2,10 +2,10 @@
 
 public class SlotMarker : MonoBehaviour
 {
-    public int Number { get; private set; }
+    public int Number;
 
     [HideInInspector]
-    public float LocalAngle { get; private set; }
+    public float LocalAngle;
 
     public void Initialize(int number, float localAngle)
     {
