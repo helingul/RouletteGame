@@ -1,7 +1,8 @@
 fileFormatVersion: 2
-guid: b6e54acc881a03c4a9719b161a25a3e3
-PrefabImporter:
+guid: b3ed9e83085d95542b762dd15b306e7a
+NativeFormatImporter:
   externalObjects: {}
+  mainObjectFileID: 2100000
   userData: 
   assetBundleName: 
   assetBundleVariant: 
@@ -10,5 +11,5 @@ AssetOrigin:
   productId: 200333
   packageName: Hyper Casual FX
   packageVersion: 1.0.1
-  assetPath: Assets/Lana Studio/Hyper Casual FX/Prefabs/Shine/Shine_ellow.prefab
+  assetPath: Assets/Art/VFX/Materials/Circles_Additive.mat
   uploadId: 475766

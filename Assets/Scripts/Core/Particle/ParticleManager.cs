@@ -8,6 +8,7 @@ using static UnityEngine.ParticleSystem;
 public class ParticleManager : MonoBehaviour
 {
     [SerializeField] private List<GameObject> winParticlePrefabs;
+    [SerializeField] private GameObject chipPlacementParticlePrefab;
     private void Awake()
     {
         SubscribeToEventBus();
@@ -20,11 +21,13 @@ public class ParticleManager : MonoBehaviour
     private void SubscribeToEventBus()
     {
         RouletteEventBus.OnRoundResult += HandleRountResult;
+        RouletteEventBus.OnChipPlaced += HandleChipPlaced;
     }
 
     private void UnsubscribeFromEventBus()
     {
         RouletteEventBus.OnRoundResult -= HandleRountResult;
+        RouletteEventBus.OnChipPlaced -= HandleChipPlaced;
     }
 
     private void HandleRountResult(int net)
@@ -44,5 +47,16 @@ public class ParticleManager : MonoBehaviour
                 Instantiate(prefab, position, Quaternion.identity);
             }
         }
+    }
+
+    private void HandleChipPlaced(Chip chip, BetSpot betSpot)
+    {
+        if (chipPlacementParticlePrefab == null)
+        {
+            Debug.LogError("[ParticleManager] Chip placement particle is not valid.");
+            return;
+        }
+
+        Instantiate(chipPlacementParticlePrefab, chip.transform.position, Quaternion.identity);
     }
 }

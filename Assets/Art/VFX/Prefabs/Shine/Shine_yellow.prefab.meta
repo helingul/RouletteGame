@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 2e79f16be10fbd14f8d5ef191f8db4aa
+guid: b6e54acc881a03c4a9719b161a25a3e3
 PrefabImporter:
   externalObjects: {}
   userData: 
@@ -10,5 +10,5 @@ AssetOrigin:
   productId: 200333
   packageName: Hyper Casual FX
   packageVersion: 1.0.1
-  assetPath: Assets/Art/VFX/Prefabs/Confetti/Confetti_blast_multicolor.prefab
+  assetPath: Assets/Art/VFX/Prefabs/Shine/Shine_ellow.prefab
   uploadId: 475766
