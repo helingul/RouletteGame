@@ -12,7 +12,7 @@ public class ChipController : MonoBehaviour
     [SerializeField] private Button UndoButton;
     [SerializeField] private Button ClearButton;
 
-    private void Awake()
+    private void Start()
     {
         AddChipButton_5.onClick.AddListener(OnClick5);
         AddChipButton_20.onClick.AddListener(OnClick20);
@@ -22,6 +22,9 @@ public class ChipController : MonoBehaviour
 
         UndoButton.onClick.AddListener(UndoLastChip);
         ClearButton.onClick.AddListener(ClerarChips);
+
+        RouletteEventBus.OnSpinStarted += HandleSpinStarted;
+        RouletteEventBus.OnRoundResult += HandleRountResult;
 
     }
     private void OnDestroy()
@@ -34,6 +37,10 @@ public class ChipController : MonoBehaviour
 
         UndoButton.onClick.RemoveListener(UndoLastChip);
         ClearButton.onClick.RemoveListener(ClerarChips);
+
+
+        RouletteEventBus.OnSpinStarted -= HandleSpinStarted;
+        RouletteEventBus.OnRoundResult -= HandleRountResult;
     }
     private void OnClick5() => OnAddChipClicked(5);
     private void OnClick20() => OnAddChipClicked(20);
@@ -54,5 +61,27 @@ public class ChipController : MonoBehaviour
     private void ClerarChips()
     {
         RouletteGameManager.Instance.ExecuteClearTable();
+    }
+
+    private void HandleSpinStarted()
+    {
+        EnableButtons(false);
+    }
+
+    private void HandleRountResult(int net)
+    {
+        EnableButtons(true);
+    }
+
+    private void EnableButtons(bool enabled)
+    {
+        AddChipButton_5.enabled = enabled;
+        AddChipButton_20.enabled = enabled;
+        AddChipButton_50.enabled = enabled;
+        AddChipButton_1000.enabled = enabled;
+        AddChipButton_5000.enabled = enabled;
+
+        UndoButton.enabled = enabled;
+        ClearButton.enabled = enabled;
     }
 }

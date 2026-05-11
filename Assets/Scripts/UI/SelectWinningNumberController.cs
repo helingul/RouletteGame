@@ -14,6 +14,8 @@ public class SelectWinningNumberController : MonoBehaviour
 
     private void Start()
     {
+        DisableScreen();
+
         closeButton.onClick.AddListener(DisableScreen);
         openButton.onClick.AddListener(EnableScreen);
         selectButton.onClick.AddListener(OnSelectNumberClicked);

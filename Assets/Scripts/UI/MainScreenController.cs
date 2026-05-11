@@ -12,26 +12,11 @@ public class MainScreenController : MonoBehaviour
     [SerializeField] private Button spinButton;
     [SerializeField] private Button selectWinningNumberButton;
 
-
-    [SerializeField] private TMP_Text messageText;
-
-    [SerializeField] private float fadeDuration = 0.3f;
-    [SerializeField] private float visibleDuration = 3f;
-
-    private Coroutine fadeRoutine;
-    private void Awake()
-    {
-        SetAlpha(0);
-    }
-
-
     private void Start()
     {
         RouletteEventBus.OnBalanceChanged += HandleBalanceChanged;
         RouletteEventBus.OnChipPlaced += HandleChipPlaced;
         RouletteEventBus.OnChipRemoved += HandleChipRemoved;
-        RouletteEventBus.OnBetExceedsBalance += HandleBetExceedsBalance;
-        RouletteEventBus.OnChipTrayFull += HandleChipTrayFull;
         RouletteEventBus.OnSpinStarted += HandleSpinStarted;
         RouletteEventBus.OnRoundResult += HandleRountResult;
 
@@ -44,7 +29,6 @@ public class MainScreenController : MonoBehaviour
         RouletteEventBus.OnBalanceChanged -= HandleBalanceChanged;
         RouletteEventBus.OnChipPlaced -= HandleChipPlaced;
         RouletteEventBus.OnChipRemoved -= HandleChipRemoved;
-        RouletteEventBus.OnBetExceedsBalance -= HandleBetExceedsBalance;
         RouletteEventBus.OnSpinStarted -= HandleSpinStarted;
         RouletteEventBus.OnRoundResult -= HandleRountResult;
 
@@ -100,56 +84,5 @@ public class MainScreenController : MonoBehaviour
     private void HandleSpinButtonClicked()
     {
         RouletteGameManager.Instance.StartSpin();
-    }
-    private void HandleBetExceedsBalance()
-    {
-        ShowWarning("Bet exceeds balance");
-    }
-    private void HandleChipTrayFull()
-    {
-        ShowWarning("Chip tray capacity is reached");
-    }
-
-    private void ShowWarning(string warning)
-    {
-        if (fadeRoutine != null)
-            StopCoroutine(fadeRoutine);
-
-        fadeRoutine = StartCoroutine(ShowWarningCoroutine(warning));
-    }
-    private IEnumerator ShowWarningCoroutine(string message)
-    {
-        messageText.text = message;
-
-        yield return Fade(0, 1);
-
-        yield return new WaitForSeconds(visibleDuration);
-
-        yield return Fade(1, 0);
-    }
-
-    private IEnumerator Fade(float from, float to)
-    {
-        float time = 0;
-
-        while (time < fadeDuration)
-        {
-            time += Time.deltaTime;
-
-            float t = time / fadeDuration;
-
-            SetAlpha(Mathf.Lerp(from, to, t));
-
-            yield return null;
-        }
-
-        SetAlpha(to);
-    }
-
-    private void SetAlpha(float alpha)
-    {
-        Color color = messageText.color;
-        color.a = alpha;
-        messageText.color = color;
     }
 }
