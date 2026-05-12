@@ -1,23 +1,24 @@
-
-public enum Result
+namespace RouletteGame.Common
 {
-    Success,
-    Failure,
-}
+    public enum Result
+    {
+        Success,
+        Failure,
+    }
+    public enum BetType
+    {
+        // Inside Bets
+        Straight,
+        Split,
+        Street,
+        Corner,
+        SixLine,
 
-public enum BetType
-{
-    // Inside Bets
-    Straight,
-    Split,
-    Street,
-    Corner,
-    SixLine,
-
-    // Outside Bets
-    Dozen,
-    Column,
-    RedBlack,
-    OddEven,
-    HighLow
+        // Outside Bets
+        Dozen,
+        Column,
+        RedBlack,
+        OddEven,
+        HighLow
+    }
 }

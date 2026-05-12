@@ -1,35 +1,41 @@
-//////////////////////////////////////////////////////////////////////////
-//  ScriptableObject – stores all chip definitions
-//  Definition list is mapped by its value for fast access
-//  Used by ChipFactory
-//////////////////////////////////////////////////////////////////////////
-
-using System;
+using RouletteGame.Chip;
 using System.Collections.Generic;
 using UnityEngine;
-using static ChipFactory;
 
-[CreateAssetMenu(fileName = "ChipDefinitionList", menuName = "Roulette/ChipDefinitionList")]
-public class ChipDefinitionList : ScriptableObject
+namespace RouletteGame.Data
 {
-   
-    [SerializeField] private List<ChipFactory.ChipDefinition> chipDefinitions = new List<ChipFactory.ChipDefinition>();
+    //////////////////////////////////////////////////////////////////////////
+    // ScriptableObject that stores all chip visual/behavior definitions.
+    // Provides fast lookup (value -> ChipDefinition) for ChipFactory usage
+    //////////////////////////////////////////////////////////////////////////
 
-    private Dictionary<int, ChipFactory.ChipDefinition> chipDefinitionMap;
-
-    public IReadOnlyList<ChipFactory.ChipDefinition> ChipDefinitions => chipDefinitions;
-
-    private void OnEnable()
+    [CreateAssetMenu(fileName = "ChipDefinitionList", menuName = "Roulette/ChipDefinitionList")]
+    public class ChipDefinitionList : ScriptableObject
     {
-        chipDefinitionMap = new Dictionary<int, ChipFactory.ChipDefinition>();
+        [SerializeField] 
+        private List<ChipFactory.ChipDefinition> chipDefinitions;
 
-        foreach (var chipDefinition in chipDefinitions)
-            chipDefinitionMap.Add(chipDefinition.value, chipDefinition);
-    }
+        //////////////////////////////////////////////////////////////////////////
+        private Dictionary<int, ChipFactory.ChipDefinition> chipDefinitionMap;
+        public IReadOnlyList<ChipFactory.ChipDefinition> ChipDefinitions => chipDefinitions;
 
-    public ChipFactory.ChipDefinition TryGetChipDefinition(int value)
-    {
-        ChipFactory.ChipDefinition chipDefinition = null;
-       return chipDefinitionMap.TryGetValue(value, out chipDefinition) ? chipDefinition : null;
+        //////////////////////////////////////////////////////////////////////////
+        // Builds dictionary cache for fast lookup of chip definitions by value.
+        private void OnEnable()
+        {
+            chipDefinitionMap = new Dictionary<int, ChipFactory.ChipDefinition>();
+
+            foreach (var chipDefinition in chipDefinitions)
+                chipDefinitionMap.Add(chipDefinition.value, chipDefinition);
+        }
+
+        // Returns chip definition for given value.
+        // Returns null if value is not found in the dictionary.
+        public ChipFactory.ChipDefinition GetChipDefinition(int value)
+        {
+            ChipFactory.ChipDefinition chipDefinition = null;
+
+            return chipDefinitionMap.TryGetValue(value, out chipDefinition) ? chipDefinition : null;
+        }
     }
 }

@@ -1,16 +1,18 @@
 ﻿using UnityEngine;
 
-public class SlotMarker : MonoBehaviour
+namespace RouletteGame.WheelSlot
 {
-    public int Number;
-
-    [HideInInspector]
-    public float LocalAngle;
-
-    public void Initialize(int number, float localAngle)
+    public class SlotMarker : MonoBehaviour
     {
-        Number = number;
-        LocalAngle = localAngle;
+        public int Number;
+
+        [HideInInspector]
+        public float LocalAngle;
+
+        public void Initialize(int number, float localAngle)
+        {
+            Number = number;
+            LocalAngle = localAngle;
+        }
     }
 }
-

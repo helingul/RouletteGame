@@ -1,41 +1,49 @@
 using UnityEngine;
 
-public class CameraController : MonoBehaviour
+namespace RouletteGame.Core.Camera
 {
-    [SerializeField] private CameraTransitionController cameraTransitionController;
-    [SerializeField] private Transform WheelFocusPoint;
-    [SerializeField] private Transform TableFocusPoint;
-
-    private void Awake()
+    //////////////////////////////////////////////////////////////////////////
+    // Controls camera focus transitions during roulette gameplay.
+    // Listens to game events and switches between table and wheel views.
+    //////////////////////////////////////////////////////////////////////////
+    public class CameraController : MonoBehaviour
     {
-        SubscribeToEventBus();
-    }
+        // Inspector refs
+        [SerializeField] private CameraTransitionController cameraTransitionController;
+        [SerializeField] private Transform wheelFocusPoint;
+        [SerializeField] private Transform tableFocusPoint;
 
-    private void OnDestroy()
-    {
-        UnsubscribeFromEventBus();
-    }
-   
-    private void HandleSpinStarted()
-    {
-        cameraTransitionController?.FocusToTarget(WheelFocusPoint);
-    }
+        //////////////////////////////////////////////////////////////////////////
+        private void Awake()
+        {
+            SubscribeToEventBus();
+        }
 
-    private void HandleSpinFinished()
-    {
-        cameraTransitionController?.FocusToTarget(TableFocusPoint);
-    }
+        private void OnDestroy()
+        {
+            UnsubscribeFromEventBus();
+        }
 
-    private void SubscribeToEventBus()
-    {
-        RouletteEventBus.OnSpinStarted += HandleSpinStarted;
-        RouletteEventBus.OnSpinFinished += HandleSpinFinished;
-    }
+        private void HandleSpinStarted()
+        {
+            cameraTransitionController?.FocusToTarget(wheelFocusPoint);
+        }
 
-    private void UnsubscribeFromEventBus()
-    {
-        RouletteEventBus.OnSpinStarted -= HandleSpinStarted;
-        RouletteEventBus.OnSpinFinished -= HandleSpinFinished;
-    }
+        private void HandleSpinFinished()
+        {
+            cameraTransitionController?.FocusToTarget(tableFocusPoint);
+        }
 
+        private void SubscribeToEventBus()
+        {
+            RouletteEventBus.OnSpinStarted += HandleSpinStarted;
+            RouletteEventBus.OnSpinFinished += HandleSpinFinished;
+        }
+
+        private void UnsubscribeFromEventBus()
+        {
+            RouletteEventBus.OnSpinStarted -= HandleSpinStarted;
+            RouletteEventBus.OnSpinFinished -= HandleSpinFinished;
+        }
+    }
 }

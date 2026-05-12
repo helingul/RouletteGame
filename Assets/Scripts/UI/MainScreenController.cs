@@ -1,88 +1,102 @@
-using System.Collections;
+using RouletteGame.Bets;
+using RouletteGame.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-public class MainScreenController : MonoBehaviour
+
+namespace RouletteGame.UI
 {
-    [SerializeField] private TMP_Text balanceText;
-    [SerializeField] private TMP_Text winningAmountText;
-    [SerializeField] private TMP_Text currentBetsText;
-    [SerializeField] private TMP_Text totalSpinsText;
+    using Chip = Chip.Chip;
 
-    [SerializeField] private Button spinButton;
-    [SerializeField] private Button selectWinningNumberButton;
-
-    private void Start()
+    ///////////////////////////////////////////////////////////////////////////
+    // Controls the main UI screen of the Roulette game.
+    // Responsible for updating balance, bets, winnings, and spin statistics.
+    // Also manages spin interactions and listens to core game events to
+    // keep UI state synchronized.
+    ///////////////////////////////////////////////////////////////////////////
+    public class MainScreenController : MonoBehaviour
     {
-        RouletteEventBus.OnBalanceChanged += HandleBalanceChanged;
-        RouletteEventBus.OnChipPlaced += HandleChipPlaced;
-        RouletteEventBus.OnChipRemoved += HandleChipRemoved;
-        RouletteEventBus.OnSpinStarted += HandleSpinStarted;
-        RouletteEventBus.OnRoundResult += HandleRountResult;
+        ///////////////////////////////////////////////////////////////////////////
+        [SerializeField] private TMP_Text balanceText;
+        [SerializeField] private TMP_Text winningAmountText;
+        [SerializeField] private TMP_Text currentBetsText;
+        [SerializeField] private TMP_Text totalSpinsText;
 
-        spinButton.onClick.AddListener(HandleSpinButtonClicked);
+        [SerializeField] private Button spinButton;
+        [SerializeField] private Button selectWinningNumberButton;
 
-        Initialize();
-    }
-    private void OnDestroy()
-    {
-        RouletteEventBus.OnBalanceChanged -= HandleBalanceChanged;
-        RouletteEventBus.OnChipPlaced -= HandleChipPlaced;
-        RouletteEventBus.OnChipRemoved -= HandleChipRemoved;
-        RouletteEventBus.OnSpinStarted -= HandleSpinStarted;
-        RouletteEventBus.OnRoundResult -= HandleRountResult;
+        ///////////////////////////////////////////////////////////////////////////
+        private void OnEnable()
+        {
+            RouletteEventBus.OnBalanceChanged += HandleBalanceChanged;
+            RouletteEventBus.OnChipPlaced += HandleChipPlaced;
+            RouletteEventBus.OnChipRemoved += HandleChipRemoved;
+            RouletteEventBus.OnSpinStarted += HandleSpinStarted;
+            RouletteEventBus.OnRoundResult += HandleRoundResult;
 
-        spinButton.onClick.RemoveListener(HandleSpinButtonClicked);
-    }
+            spinButton.onClick.AddListener(HandleSpinButtonClicked);
 
-    private void Initialize()
-    {
-        balanceText.text = RouletteGameManager.Instance.Balance.ToString();
-        totalSpinsText.text = RouletteGameManager.Instance.History.Count.ToString();
-        winningAmountText.text = RouletteGameManager.Instance.TotalWin.ToString();
-    }
+            Initialize();
+        }
+        private void OnDisable()
+        {
+            RouletteEventBus.OnBalanceChanged -= HandleBalanceChanged;
+            RouletteEventBus.OnChipPlaced -= HandleChipPlaced;
+            RouletteEventBus.OnChipRemoved -= HandleChipRemoved;
+            RouletteEventBus.OnSpinStarted -= HandleSpinStarted;
+            RouletteEventBus.OnRoundResult -= HandleRoundResult;
 
-    private void HandleBalanceChanged(int balance)
-    {
-        balanceText.text = balance.ToString();
-    }
+            spinButton.onClick.RemoveListener(HandleSpinButtonClicked);
+        }
 
-    private void HandleChipPlaced(Chip chip, BetSpot betSpot)
-    {
-        SetCurrentBets();
-    }
+        private void Initialize()
+        {
+            balanceText.text = RouletteGameManager.Instance.Balance.ToString();
+            totalSpinsText.text = RouletteGameManager.Instance.History.Count.ToString();
+            winningAmountText.text = RouletteGameManager.Instance.TotalWin.ToString();
+        }
 
-    private void HandleChipRemoved(Chip chip, BetSpot betSpot)
-    {
-        SetCurrentBets();
-    }
+        private void HandleBalanceChanged(int balance)
+        {
+            balanceText.text = balance.ToString();
+        }
+        private void HandleChipPlaced(Chip chip, BetSpot betSpot)
+        {
+            SetCurrentBets();
+        }
 
-    private void SetCurrentBets()
-    {
-        currentBetsText.text = RouletteGameManager.Instance.GetTotalBetAmount().ToString();
-    }
+        private void HandleChipRemoved(Chip chip, BetSpot betSpot)
+        {
+            SetCurrentBets();
+        }
 
-    private void HandleSpinStarted()
-    {
-        EnableSpinButtons(false);
-    }
+        private void SetCurrentBets()
+        {
+            currentBetsText.text = RouletteGameManager.Instance.GetTotalBetAmount().ToString();
+        }
 
-    private void HandleRountResult(int net)
-    {
-        totalSpinsText.text = RouletteGameManager.Instance.History.Count.ToString();
-        winningAmountText.text = RouletteGameManager.Instance.TotalWin.ToString();
+        private void HandleSpinStarted()
+        {
+            EnableSpinButtons(false);
+        }
 
-        EnableSpinButtons(true);
-    }
+        private void HandleRoundResult(int net)
+        {
+            totalSpinsText.text = RouletteGameManager.Instance.History.Count.ToString();
+            winningAmountText.text = RouletteGameManager.Instance.TotalWin.ToString();
 
-    private void EnableSpinButtons(bool enabled)
-    {
-        spinButton.enabled = enabled;
-        selectWinningNumberButton.enabled = enabled;
-    }
+            EnableSpinButtons(true);
+        }
 
-    private void HandleSpinButtonClicked()
-    {
-        RouletteGameManager.Instance.StartSpin();
+        private void EnableSpinButtons(bool state)
+        {
+            spinButton.interactable = state;
+            selectWinningNumberButton.interactable = state;
+        }
+
+        private void HandleSpinButtonClicked()
+        {
+            RouletteGameManager.Instance.StartSpin();
+        }
     }
 }

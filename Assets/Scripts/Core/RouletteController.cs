@@ -1,89 +1,101 @@
-//////////////////////////////////////////////////////////////////////////
-//  RouletteController.cs
-//  Controls the physical wheel and ball animation.
-//  Fires RouletteEventBus.RaiseSpinFinished() when done so
-//  RouletteGameManager can transition states without coupling.
-//////////////////////////////////////////////////////////////////////////
-
+using RouletteGame.Ball;
+using RouletteGame.WheelSlot;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
 
-public class RouletteController : MonoBehaviour
+namespace RouletteGame.Core
 {
-    [Header("References")]
-    [SerializeField] private Transform wheelPivot;
-    [SerializeField] private RouletteBall ball;
+    //////////////////////////////////////////////////////////////////////////
+    // Controls the roulette wheel rotation and ball spin/settle sequence.
+    // Coordinates physical simulation timing and emits a spin-finished event
+    // when the ball has fully settled into a slot.
+    //////////////////////////////////////////////////////////////////////////
 
-    [Header("Pockets")]
-    [SerializeField] private GameObject pocketsParent;
-
-    [Header("Wheel")]
-    [SerializeField] private float wheelSpeedDeg = 120f;
-
-    [Header("Ball")]
-    [SerializeField] private float spinDuration = 8f;
-    [SerializeField] private int extraTurns = 7;
-
-    private SlotMarker[] pockets;
-    private float wheelAngleDeg;
-    private bool isReadyToSpin = true;
-
-    // Lifecycle
-    private void Start()
+    public class RouletteController : MonoBehaviour
     {
-        pockets = pocketsParent.GetComponentsInChildren<SlotMarker>();
-    }
+        // Inspector refs
 
-    private void Update()
-    {
-        wheelAngleDeg += wheelSpeedDeg * Time.deltaTime;
-        wheelPivot.rotation = Quaternion.Euler(0f, wheelAngleDeg, 0f);
-    }
+        [Header("References")]
+        [SerializeField] private Transform wheelPivot;
+        [SerializeField] private RouletteBall ball;
 
-    // Public API
+        [Header("Pockets")]
+        [SerializeField] private GameObject pocketsParent;
 
-    // Spins ball to the pocket matching winningNumber.
-    // Fires RouletteEventBus.RaiseSpinFinished() when settled.
-    public void Spin(int winningNumber)
-    {
-        if (!isReadyToSpin)
+        [Header("Wheel")]
+        [SerializeField] private float wheelSpeedDeg = 120f;
+
+        [Header("Ball")]
+        [SerializeField] private float spinDuration = 8f;
+        [SerializeField] private int extraTurns = 7;
+
+        //////////////////////////////////////////////////////////////////////////
+        
+        private SlotMarker[] pockets;
+        private float wheelAngleDeg;
+        private bool isReadyToSpin = true;
+
+        //////////////////////////////////////////////////////////////////////////
+        private void Start()
         {
-            Debug.LogWarning("[RouletteController] Spin requested while already spinning.");
-            return;
+            pockets = pocketsParent.GetComponentsInChildren<SlotMarker>();
         }
 
-        SlotMarker target = pockets.FirstOrDefault(p => p.Number == winningNumber);
-        if (target == null)
+        private void Update()
         {
-            Debug.LogError($"[RouletteController] No pocket found for number {winningNumber}!");
-            return;
+            // Continuously rotates the wheel at a constant speed.
+            wheelAngleDeg += wheelSpeedDeg * Time.deltaTime;
+            wheelPivot.rotation = Quaternion.Euler(0f, wheelAngleDeg, 0f);
         }
 
-        isReadyToSpin = false;
-        StartCoroutine(SpinRoutine(target));
-    }
+        // Spins ball to the pocket matching winningNumber.
+        public void Spin(int winningNumber)
+        {
+            // Start a new spin only if wheel is idle.
+            if (!isReadyToSpin)
+            {
+                Debug.LogWarning("[RouletteController] Spin requested while already spinning.");
+                return;
+            }
 
-    // Internal
-    private IEnumerator SpinRoutine(SlotMarker target)
-    {
-        float wheelAngleAtEnd = wheelAngleDeg + wheelSpeedDeg * spinDuration;
-        float pocketWorldAngleDeg = -wheelAngleAtEnd + target.LocalAngle;
-        float targetRad = pocketWorldAngleDeg * Mathf.Deg2Rad;
+            // Find the target pocket corresponding to the winning number.
+            SlotMarker target = pockets.FirstOrDefault(p => p.Number == winningNumber);
+            if (target == null)
+            {
+                Debug.LogError($"[RouletteController] No pocket found for number {winningNumber}!");
+                return;
+            }
 
-        ball.StartSpin(targetRad, spinDuration, extraTurns);
+            isReadyToSpin = false;
+            StartCoroutine(SpinRoutine(target));
+        }
 
-        yield return new WaitForSeconds(spinDuration);
+        private IEnumerator SpinRoutine(SlotMarker target)
+        {
+            // Compute final wheel angle and convert target pocket into ball spin angle.
+            float wheelAngleAtEnd = wheelAngleDeg + wheelSpeedDeg * spinDuration;
+            float pocketWorldAngleDeg = -wheelAngleAtEnd + target.LocalAngle;
+            float targetRad = pocketWorldAngleDeg * Mathf.Deg2Rad;
 
-        ball.AttachToWheel(wheelPivot);
+            // Start ball spin animation with deterministic landing target.
+            ball.StartSpin(targetRad, spinDuration, extraTurns);
 
-        yield return new WaitUntil(() => !ball.IsActive);
+            // Wait for ball spin phase to complete before attaching to wheel.
+            yield return new WaitForSeconds(spinDuration);
 
-        isReadyToSpin = true;
+            // Switch ball to wheel space for final settling behavior.
+            ball.AttachToWheel(wheelPivot);
 
-        Debug.Log($"[RouletteController] Ball settled – winner: {target.Number}");
+            // Wait until all ball motion (wobble + bounce) finishes.
+            yield return new WaitUntil(() => !ball.IsActive);
 
-        // Notify via event bus instead of calling GameManager directly
-        RouletteEventBus.RaiseSpinFinished();
+            isReadyToSpin = true;
+
+            Debug.Log($"[RouletteController] Ball settled – winner: {target.Number}");
+
+            // Notify via event bus instead of calling GameManager directly
+            RouletteEventBus.RaiseSpinFinished();
+        }
     }
 }

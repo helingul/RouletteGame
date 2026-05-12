@@ -1,87 +1,95 @@
+using RouletteGame.Core;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ChipController : MonoBehaviour
+namespace RouletteGame.UI
 {
-    [SerializeField] private Button AddChipButton_5;
-    [SerializeField] private Button AddChipButton_20;
-    [SerializeField] private Button AddChipButton_50;
-    [SerializeField] private Button AddChipButton_1000;
-    [SerializeField] private Button AddChipButton_5000;
-
-    [SerializeField] private Button UndoButton;
-    [SerializeField] private Button ClearButton;
-
-    private void Start()
+    ///////////////////////////////////////////////////////////////////////////
+    // Handles the UI logic for chip selection and table control.
+    // Responsible for raising chip add events, and managing undo/clear actions.
+    // Also enables or disables betting UI based on game state events
+    // (spin start and round result).
+    ///////////////////////////////////////////////////////////////////////////
+    public class ChipController : MonoBehaviour
     {
-        AddChipButton_5.onClick.AddListener(OnClick5);
-        AddChipButton_20.onClick.AddListener(OnClick20);
-        AddChipButton_50.onClick.AddListener(OnClick50);
-        AddChipButton_1000.onClick.AddListener(OnClick1000);
-        AddChipButton_5000.onClick.AddListener(OnClick5000);
+        ///////////////////////////////////////////////////////////////////////////
+        [System.Serializable]
+        private class ChipButton
+        {
+            public Button button;
+            public int value;
+        }
 
-        UndoButton.onClick.AddListener(UndoLastChip);
-        ClearButton.onClick.AddListener(ClerarChips);
+        ///////////////////////////////////////////////////////////////////////////
+        
+        [Header("Chip Buttons")]
+        [SerializeField] private ChipButton[] chipButtons;
 
-        RouletteEventBus.OnSpinStarted += HandleSpinStarted;
-        RouletteEventBus.OnRoundResult += HandleRountResult;
+        [Header("Actions")]
+        [SerializeField] private Button undoButton;
+        [SerializeField] private Button clearButton;
 
-    }
-    private void OnDestroy()
-    {
-        AddChipButton_5.onClick.RemoveListener(OnClick5);
-        AddChipButton_20.onClick.RemoveListener(OnClick20);
-        AddChipButton_50.onClick.RemoveListener(OnClick50);
-        AddChipButton_1000.onClick.RemoveListener(OnClick1000);
-        AddChipButton_5000.onClick.RemoveListener(OnClick5000);
+        ///////////////////////////////////////////////////////////////////////////
+        private void OnEnable()
+        {
+            foreach (var chip in chipButtons)
+            {
+                chip.button.onClick.AddListener(() => OnChipClicked(chip.value));
+            }
 
-        UndoButton.onClick.RemoveListener(UndoLastChip);
-        ClearButton.onClick.RemoveListener(ClerarChips);
+            undoButton.onClick.AddListener(UndoLastChip);
+            clearButton.onClick.AddListener(ClearChips);
 
+            RouletteEventBus.OnSpinStarted += HandleSpinStarted;
+            RouletteEventBus.OnRoundResult += HandleRoundResult;
 
-        RouletteEventBus.OnSpinStarted -= HandleSpinStarted;
-        RouletteEventBus.OnRoundResult -= HandleRountResult;
-    }
-    private void OnClick5() => OnAddChipClicked(5);
-    private void OnClick20() => OnAddChipClicked(20);
-    private void OnClick50() => OnAddChipClicked(50);
-    private void OnClick1000() => OnAddChipClicked(1000);
-    private void OnClick5000() => OnAddChipClicked(5000);
+        }
+        private void OnDisable()
+        {
+            foreach (var chip in chipButtons)
+            {
+                chip.button.onClick.RemoveAllListeners();
+            }
 
-    private void OnAddChipClicked(int value)
-    {
-        RouletteEventBus.RaiseChipAdded(value);
-    }
+            undoButton.onClick.RemoveListener(UndoLastChip);
+            clearButton.onClick.RemoveListener(ClearChips);
 
-    private void UndoLastChip()
-    {
-        RouletteGameManager.Instance.UndoLastBet();
-    }
+            RouletteEventBus.OnSpinStarted -= HandleSpinStarted;
+            RouletteEventBus.OnRoundResult -= HandleRoundResult;
+        }
+        private void OnChipClicked(int value)
+        {
+            RouletteEventBus.RaiseChipAdded(value);
+        }
+        private void UndoLastChip()
+        {
+            RouletteGameManager.Instance.UndoLastBet();
+        }
 
-    private void ClerarChips()
-    {
-        RouletteGameManager.Instance.ExecuteClearTable();
-    }
+        private void ClearChips()
+        {
+            RouletteGameManager.Instance.ExecuteClearTable();
+        }
 
-    private void HandleSpinStarted()
-    {
-        EnableButtons(false);
-    }
+        private void HandleSpinStarted()
+        {
+            SetInteractable(false);
+        }
 
-    private void HandleRountResult(int net)
-    {
-        EnableButtons(true);
-    }
+        private void HandleRoundResult(int net)
+        {
+            SetInteractable(true);
+        }
 
-    private void EnableButtons(bool enabled)
-    {
-        AddChipButton_5.enabled = enabled;
-        AddChipButton_20.enabled = enabled;
-        AddChipButton_50.enabled = enabled;
-        AddChipButton_1000.enabled = enabled;
-        AddChipButton_5000.enabled = enabled;
+        private void SetInteractable(bool state)
+        {
+            foreach (var chip in chipButtons)
+            {
+                chip.button.interactable = state;
+            }
 
-        UndoButton.enabled = enabled;
-        ClearButton.enabled = enabled;
+            undoButton.interactable = state;
+            clearButton.interactable = state;
+        }
     }
 }

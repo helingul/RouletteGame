@@ -1,13 +1,22 @@
 #if UNITY_EDITOR
+using RouletteGame.WheelSlot;
 using UnityEditor;
 using UnityEngine;
 
+///////////////////////////////////////////////////////////////////////////
+// Editor utility that generates roulette wheel slot markers in the Unity scene.
+// Creates a circular arrangement of pocket GameObjects based on the standard
+// roulette wheel order.
+// Each slot is positioned using polar coordinates and initialized
+// with its corresponding number.
+///////////////////////////////////////////////////////////////////////////
 public class SlotMarkerGenerator : EditorWindow
 {
+
     [MenuItem("Tools/Create Roulette Slots")]
     public static void CreateSlots()
     {
-        // TODO: wheelOrder and pocketRadius should be retrieved from config
+        // TODO: These values should be retrieved from a menu in editor.
         int[] wheelOrder = {
             0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13,
             36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14,
