@@ -2139,8 +2139,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cameraTransitionController: {fileID: 330585548}
-  WheelFocusPoint: {fileID: 1801996554}
-  TableFocusPoint: {fileID: 654286247}
+  wheelFocusPoint: {fileID: 0}
+  tableFocusPoint: {fileID: 0}
 --- !u!4 &203898448
 Transform:
   m_ObjectHideFlags: 0
@@ -3208,7 +3208,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1051005162}
+  m_Father: {fileID: 1261294161}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0.272}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
@@ -4883,6 +4883,67 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6722018042599205172, guid: ee0b0fed7b50e3d4ab7b3f9efaba5dd1, type: 3}
   m_PrefabInstance: {fileID: 486344443}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &428302723
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 428302724}
+  - component: {fileID: 428302725}
+  m_Layer: 0
+  m_Name: ChipController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &428302724
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 428302723}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1166036053}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &428302725
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 428302723}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b62de92aafa9c04f81e47837a71c822, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  chipButtons:
+  - button: {fileID: 624627534}
+    value: 5
+  - button: {fileID: 301641219}
+    value: 20
+  - button: {fileID: 553004873}
+    value: 50
+  - button: {fileID: 1581925115}
+    value: 1000
+  - button: {fileID: 732118893}
+    value: 5000
+  undoButton: {fileID: 1141273335}
+  clearButton: {fileID: 2146248934}
 --- !u!4 &432636898 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6722018042599205172, guid: ee0b0fed7b50e3d4ab7b3f9efaba5dd1, type: 3}
@@ -7073,7 +7134,7 @@ GameObject:
   m_Component:
   - component: {fileID: 638718307}
   m_Layer: 0
-  m_Name: StaticObjects
+  m_Name: RouletteTable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7092,7 +7153,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1651035065}
   - {fileID: 1472103402}
   - {fileID: 3354307288024609434}
   m_Father: {fileID: 0}
@@ -10721,7 +10781,7 @@ GameObject:
   - component: {fileID: 1051005162}
   - component: {fileID: 1051005163}
   m_Layer: 0
-  m_Name: SelectNumberScreen
+  m_Name: SelectNumberController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10739,9 +10799,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1304486464}
-  - {fileID: 280982387}
-  - {fileID: 1738727485}
+  - {fileID: 1261294161}
   m_Father: {fileID: 1961843882}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -10761,7 +10819,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11e4c8b5c8ee56f4ea5cb4501c8f18e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  screen: {fileID: 1051005161}
+  screen: {fileID: 1261294160}
   closeButton: {fileID: 1304486465}
   openButton: {fileID: 1195902299}
   selectButton: {fileID: 1880675053}
@@ -11830,6 +11888,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 428302724}
   - {fileID: 416748643}
   - {fileID: 1818216516}
   - {fileID: 124562335}
@@ -12899,6 +12958,44 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ee0b0fed7b50e3d4ab7b3f9efaba5dd1, type: 3}
+--- !u!1 &1261294160
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1261294161}
+  m_Layer: 0
+  m_Name: SelectNumberScreen
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1261294161
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1261294160}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1304486464}
+  - {fileID: 280982387}
+  - {fileID: 1738727485}
+  m_Father: {fileID: 1051005162}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &1296731145
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13099,7 +13196,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1051005162}
+  m_Father: {fileID: 1261294161}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -14026,7 +14123,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1468336049}
   - component: {fileID: 1468336050}
-  - component: {fileID: 1468336051}
   m_Layer: 0
   m_Name: ChipBox
   m_TagString: Untagged
@@ -14084,25 +14180,6 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
---- !u!114 &1468336051
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1468336048}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5b62de92aafa9c04f81e47837a71c822, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  AddChipButton_5: {fileID: 624627534}
-  AddChipButton_20: {fileID: 301641219}
-  AddChipButton_50: {fileID: 553004873}
-  AddChipButton_1000: {fileID: 1581925115}
-  AddChipButton_5000: {fileID: 732118893}
-  UndoButton: {fileID: 1141273335}
-  ClearButton: {fileID: 2146248934}
 --- !u!1001 &1470157366
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -15955,11 +16032,11 @@ Transform:
   m_GameObject: {fileID: 1651035064}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 12.2, y: -16.6, z: 33.5}
+  m_LocalPosition: {x: 12.192596, y: -5.5147734, z: 33.50301}
   m_LocalScale: {x: 20, y: 10, z: 10}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 638718307}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!64 &1651035066
 MeshCollider:
@@ -16561,7 +16638,7 @@ RectTransform:
   m_Children:
   - {fileID: 66138072}
   - {fileID: 1880675052}
-  m_Father: {fileID: 1051005162}
+  m_Father: {fileID: 1261294161}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
@@ -20634,6 +20711,7 @@ SceneRoots:
   - {fileID: 1443065811}
   - {fileID: 598511647}
   - {fileID: 1765124760}
+  - {fileID: 1651035065}
   - {fileID: 638718307}
   - {fileID: 1553207976}
   - {fileID: 203898448}
